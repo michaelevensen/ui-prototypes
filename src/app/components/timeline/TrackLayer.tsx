@@ -1,0 +1,73 @@
+import { useDraggable } from "@dnd-kit/core";
+// import { CSS } from "@dnd-kit/utilities";
+import { Layer } from "./types";
+// import { useMove } from "@use-gesture/react";
+import { useTimeline } from "./TimelineContext";
+import { useDrag } from "@use-gesture/react";
+
+type DraggableTrackLayerProps = {
+    layer: Layer;
+    onResize: (start: number, end: number) => void;
+};
+
+export const TrackLayer = ({ layer, onResize }: DraggableTrackLayerProps) => {
+    const { scale } = useTimeline();
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: layer.id,
+    });
+
+    const handleResize = (delta: number, position: DragHandlePosition) => {
+        if (position === "start") {
+            onResize(layer.start + delta, layer.end);
+        } else {
+            onResize(layer.start, layer.end + delta);
+        }
+    };
+
+    const style = {
+        width: (layer.end - layer.start) * scale,
+        transform: transform
+            ? `translate3d(${transform.x + layer.start * scale}px, ${
+                  transform.y
+              }px, 0)`
+            : `translate3d(${layer.start * scale}px, 0px, 0)`,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            {...attributes}
+            {...listeners}
+            className="h-20 bg-blue-500 text-white rounded shadow flex justify-between items-center cursor-move z-50"
+            style={style}
+        >
+            <DragHandle position="start" onResize={handleResize} />
+            <span className="font-mono text-xs capitalize select-none truncate">
+                {layer.id}
+            </span>
+            <DragHandle position="end" onResize={handleResize} />
+        </div>
+    );
+};
+
+type DragHandlePosition = "start" | "end";
+
+type DragHandleProps = {
+    position: DragHandlePosition;
+    onResize: (delta: number, position: DragHandlePosition) => void;
+};
+
+const DragHandle = ({ position, onResize }: DragHandleProps) => {
+    const { scale } = useTimeline();
+
+    const resize = useDrag(({ event, down, delta: [dx] }) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (down) onResize(dx / scale, position);
+    });
+
+    return (
+        <div className="cursor-col-resize w-2 h-full bg-white" {...resize()} />
+    );
+};
