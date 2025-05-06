@@ -25,6 +25,7 @@ export const TrackLayer = ({ layer, onResize }: DraggableTrackLayerProps) => {
     };
 
     const style = {
+        // position: "absolute" as const,
         width: (layer.end - layer.start) * scale,
         transform: transform
             ? `translate3d(${transform.x + layer.start * scale}px, ${
@@ -38,13 +39,15 @@ export const TrackLayer = ({ layer, onResize }: DraggableTrackLayerProps) => {
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="h-20 bg-blue-500 text-white rounded shadow flex justify-between items-center cursor-move z-50"
+            className="absolute top-1/2 -translate-y-1/2 h-20 bg-blue-500 text-white rounded shadow flex justify-between items-center cursor-move z-50"
             style={style}
         >
             <DragHandle position="start" onResize={handleResize} />
+            <span className="text-xs">{layer.start.toFixed(0)}</span>
             <span className="font-mono text-xs capitalize select-none truncate">
                 {layer.id}
             </span>
+            <span className="text-xs flex-end">{layer.end.toFixed(0)}</span>
             <DragHandle position="end" onResize={handleResize} />
         </div>
     );
@@ -68,6 +71,9 @@ const DragHandle = ({ position, onResize }: DragHandleProps) => {
     });
 
     return (
-        <div className="cursor-col-resize w-2 h-full bg-white" {...resize()} />
+        <div
+            className="cursor-col-resize w-2 h-full bg-white/20 hover:bg-white/40 touch-none"
+            {...resize()}
+        />
     );
 };

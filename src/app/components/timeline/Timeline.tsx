@@ -226,7 +226,7 @@ const TimelineTrack = ({
             style={{
                 backgroundColor: isOver ? "red" : "lightgray",
             }}
-            className="relative h-24 rounded flex items-center gap-2"
+            className="relative h-24 rounded"
         >
             {children}
         </div>
