@@ -9,8 +9,58 @@ import {
     DragMoveEvent,
 } from "@dnd-kit/core";
 import { Layer, TimelineTrackType, Track } from "./types";
-import { TrackLayer } from "./TrackLayer";
+import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
+
+function findClosestEdge(
+    currentItem: Layer,
+    allItems: Layer[],
+    direction: "left" | "right"
+) {
+    const currentStart = currentItem.start;
+    const currentEnd = currentItem.end;
+
+    // Only consider layers on the same track
+    const sameTrackItems = allItems.filter(
+        (item) =>
+            item.trackId === currentItem.trackId && item.id !== currentItem.id
+    );
+
+    let candidates;
+
+    if (direction === "left") {
+        candidates = sameTrackItems
+            .filter((item) => item.end <= currentStart)
+            .map((item) => ({ id: item.id, value: item.end }));
+
+        return closest(currentStart, candidates);
+    }
+
+    if (direction === "right") {
+        candidates = sameTrackItems
+            .filter((item) => item.start >= currentEnd)
+            .map((item) => ({ id: item.id, value: item.start }));
+
+        return closest(currentEnd, candidates);
+    }
+
+    return null;
+}
+
+function closest(target: number, candidates: { id: string; value: number }[]) {
+    let minDiff = Infinity;
+    let closest = null;
+
+    for (const c of candidates) {
+        const diff = Math.abs(target - c.value);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = c;
+        }
+    }
+
+    return closest; // { id, value }
+}
 
 export const TimelineTracks = () => {
     const { scale, setScale } = useTimeline();
@@ -94,44 +144,56 @@ export const TimelineTracks = () => {
     };
 
     const handleResize = (
-        layerId: string,
+        layer: Layer,
         newStart: number,
-        newEnd: number
+        newEnd: number,
+        direction: "left" | "right"
     ) => {
-        // Find the layer being resized
-        // const resizingLayer = layers.find((layer) => layer.id === layerId);
-        // if (!resizingLayer) return;
+        const closestEdge = findClosestEdge(layer, layers, direction);
 
-        // Find other layers in the same track
-        // const otherLayers = layers.filter(
-        //     (layer) =>
-        //         layer.trackId === resizingLayer.trackId && layer.id !== layerId
-        // );
+        let adjustedStart = newStart;
+        let adjustedEnd = newEnd;
 
-        // Check for collisions
-        // const hasCollision = otherLayers.some((layer) => {
-        //     // Check if the new start or end overlaps with any other layer
-        //     return (
-        //         (newStart >= layer.start && newStart < layer.end) ||
-        //         (newEnd > layer.start && newEnd <= layer.end) ||
-        //         (newStart <= layer.start && newEnd >= layer.end)
-        //     );
-        // });
+        if (direction === "left") {
+            // Don't allow resizing past the end of the previous item
+            if (closestEdge && newStart < closestEdge.value) {
+                adjustedStart = closestEdge.value;
+            }
+            // Prevent inverting the layer (start can't pass end)
+            if (adjustedStart >= layer.end) {
+                adjustedStart = layer.end - 1; // enforce minimum width of 1
+            }
+        }
 
-        // // Only update if there's no collision
-        // if (!hasCollision) {
+        if (direction === "right") {
+            // Don't allow resizing past the start of the next item
+            if (closestEdge && newEnd > closestEdge.value) {
+                adjustedEnd = closestEdge.value;
+            }
+            // Prevent inverting the layer
+            if (adjustedEnd <= layer.start) {
+                adjustedEnd = layer.start + 1;
+            }
+        }
+
         setLayers((layers) =>
-            layers.map((layer) =>
-                layer.id === layerId
+            layers.map((l) =>
+                l.id === layer.id
                     ? {
-                          ...layer,
-                          start: newStart,
-                          end: newEnd,
+                          ...l,
+                          start: adjustedStart,
+                          end: adjustedEnd,
                       }
-                    : layer
+                    : l
             )
         );
-        // }
+    };
+
+    const [progress, setProgress] = useState(0);
+
+    const handleMouseDown = (event: React.MouseEvent) => {
+        console.log("mouse down", event);
+        setProgress(event.clientX / scale);
     };
 
     return (
@@ -141,21 +203,28 @@ export const TimelineTracks = () => {
             collisionDetection={closestCenter}
         >
             <div
-                className="flex flex-col gap-1"
+                onMouseDown={handleMouseDown}
+                className="relative flex flex-col gap-1"
                 style={{
                     width: `${100 * scale}%`,
                 }}
             >
+                <ProgressBar progress={progress} />
                 {tracks.map((track) => (
                     <TimelineTrack key={track.id} id={track.id}>
                         {layers
                             .filter((layer) => layer.trackId === track.id)
                             .map((layer) => (
-                                <TrackLayer
+                                <TimelineTrackLayer
                                     key={layer.id}
                                     layer={layer}
-                                    onResize={(start, end) =>
-                                        handleResize(layer.id, start, end)
+                                    onResize={(start, end, direction) =>
+                                        handleResize(
+                                            layer,
+                                            start,
+                                            end,
+                                            direction
+                                        )
                                     }
                                 />
                             ))}
@@ -208,6 +277,15 @@ export const TimelineTracks = () => {
                 </div>
             </DragOverlay> */}
         </DndContext>
+    );
+};
+
+const ProgressBar = ({ progress }: { progress: number }) => {
+    return (
+        <div
+            className="h-full absolute z-50 bg-orange-500 w-[2px]"
+            style={{ left: `${progress}%` }}
+        />
     );
 };
 

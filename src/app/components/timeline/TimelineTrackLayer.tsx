@@ -1,16 +1,17 @@
 import { useDraggable } from "@dnd-kit/core";
-// import { CSS } from "@dnd-kit/utilities";
 import { Layer } from "./types";
-// import { useMove } from "@use-gesture/react";
 import { useTimeline } from "./TimelineContext";
 import { useDrag } from "@use-gesture/react";
 
-type DraggableTrackLayerProps = {
+type TimelineTrackLayerProps = {
     layer: Layer;
-    onResize: (start: number, end: number) => void;
+    onResize: (start: number, end: number, direction: "left" | "right") => void;
 };
 
-export const TrackLayer = ({ layer, onResize }: DraggableTrackLayerProps) => {
+export const TimelineTrackLayer = ({
+    layer,
+    onResize,
+}: TimelineTrackLayerProps) => {
     const { scale } = useTimeline();
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: layer.id,
@@ -18,9 +19,9 @@ export const TrackLayer = ({ layer, onResize }: DraggableTrackLayerProps) => {
 
     const handleResize = (delta: number, position: DragHandlePosition) => {
         if (position === "start") {
-            onResize(layer.start + delta, layer.end);
+            onResize(layer.start + delta, layer.end, "left");
         } else {
-            onResize(layer.start, layer.end + delta);
+            onResize(layer.start, layer.end + delta, "right");
         }
     };
 
