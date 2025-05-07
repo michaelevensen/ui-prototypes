@@ -159,7 +159,7 @@ export const TimelineTracks = () => {
         >
             <div
                 onMouseDown={handleMouseDown}
-                className="relative flex flex-col gap-1"
+                className="relative flex flex-col gap-1 p-2"
                 style={{
                     width: `${100 * scale}%`,
                 }}
@@ -224,13 +224,20 @@ export const TimelineTracks = () => {
                 <button
                     aria-label="Add Layer"
                     onClick={() => {
+                        // Find the layer with the highest end time
+                        const maxEndTime = Math.max(
+                            ...layers
+                                .filter((layer) => layer.trackId === "track-1")
+                                .map((layer) => layer.end)
+                        );
+
                         setLayers((layers) => [
                             ...layers,
                             {
                                 id: `layer-${layers.length + 1}`,
                                 trackId: "track-1",
-                                start: 400,
-                                end: 500,
+                                start: maxEndTime,
+                                end: maxEndTime + 100, // Add 100 units after the last layer
                             },
                         ]);
                     }}
@@ -271,7 +278,7 @@ const TimelineTrack = ({
             style={{
                 backgroundColor: isOver ? "red" : "lightgray",
             }}
-            className="relative h-24 rounded"
+            className="relative min-h-12 rounded"
         >
             {children}
         </div>

@@ -58,7 +58,7 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="absolute group border-transparent border-2 hover:border-black/10 top-1/2 -translate-y-1/2 h-20 bg-blue-500 text-white rounded flex items-center cursor-move z-50"
+            className="px-1 absolute group border-transparent border-2 hover:border-black/10 top-1/2 -translate-y-1/2 h-full bg-blue-500 text-white rounded flex items-center cursor-move z-50"
             style={style}
         >
             <div className="absolute inset-0 flex justify-between items-center">
