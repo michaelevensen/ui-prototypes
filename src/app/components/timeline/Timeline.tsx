@@ -11,56 +11,7 @@ import {
 import { Layer, TimelineTrackType, Track } from "./types";
 import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
-
-function findClosestEdge(
-    currentItem: Layer,
-    allItems: Layer[],
-    direction: "left" | "right"
-) {
-    const currentStart = currentItem.start;
-    const currentEnd = currentItem.end;
-
-    // Only consider layers on the same track
-    const sameTrackItems = allItems.filter(
-        (item) =>
-            item.trackId === currentItem.trackId && item.id !== currentItem.id
-    );
-
-    let candidates;
-
-    if (direction === "left") {
-        candidates = sameTrackItems
-            .filter((item) => item.end <= currentStart)
-            .map((item) => ({ id: item.id, value: item.end }));
-
-        return closest(currentStart, candidates);
-    }
-
-    if (direction === "right") {
-        candidates = sameTrackItems
-            .filter((item) => item.start >= currentEnd)
-            .map((item) => ({ id: item.id, value: item.start }));
-
-        return closest(currentEnd, candidates);
-    }
-
-    return null;
-}
-
-function closest(target: number, candidates: { id: string; value: number }[]) {
-    let minDiff = Infinity;
-    let closest = null;
-
-    for (const c of candidates) {
-        const diff = Math.abs(target - c.value);
-        if (diff < minDiff) {
-            minDiff = diff;
-            closest = c;
-        }
-    }
-
-    return closest; // { id, value }
-}
+import { findClosestEdge } from "./utils";
 
 export const TimelineTracks = () => {
     const { scale, setScale } = useTimeline();
@@ -196,6 +147,10 @@ export const TimelineTracks = () => {
         setProgress(event.clientX / scale);
     };
 
+    const [hoveredLayer, setHoveredLayer] = useState<Layer | null>(null);
+
+    console.log("hoveredLayer", hoveredLayer);
+
     return (
         <DndContext
             onDragEnd={handleDragEnd}
@@ -210,6 +165,7 @@ export const TimelineTracks = () => {
                 }}
             >
                 <ProgressBar progress={progress} />
+
                 {tracks.map((track) => (
                     <TimelineTrack key={track.id} id={track.id}>
                         {layers
@@ -218,6 +174,8 @@ export const TimelineTracks = () => {
                                 <TimelineTrackLayer
                                     key={layer.id}
                                     layer={layer}
+                                    onMouseOver={() => setHoveredLayer(layer)}
+                                    onMouseLeave={() => setHoveredLayer(null)}
                                     onResize={(start, end, direction) =>
                                         handleResize(
                                             layer,
@@ -239,7 +197,16 @@ export const TimelineTracks = () => {
                 value={scale}
                 onChange={(e) => setScale(Number(e.target.value))}
             />
+            {/* buttons */}
             <div className="flex gap-2 p-4">
+                <button
+                    aria-label="Split Track"
+                    onClick={() => {
+                        // go into split mode
+                    }}
+                >
+                    Split Track
+                </button>
                 <button
                     aria-label="Add Track"
                     onClick={() => {

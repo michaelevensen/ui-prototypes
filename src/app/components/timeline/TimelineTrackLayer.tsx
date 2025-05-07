@@ -2,20 +2,36 @@ import { useDraggable } from "@dnd-kit/core";
 import { Layer } from "./types";
 import { useTimeline } from "./TimelineContext";
 import { useDrag } from "@use-gesture/react";
+import { useState } from "react";
 
 type TimelineTrackLayerProps = {
     layer: Layer;
+    onMouseOver: () => void;
+    onMouseLeave: () => void;
     onResize: (start: number, end: number, direction: "left" | "right") => void;
 };
 
 export const TimelineTrackLayer = ({
     layer,
     onResize,
+    onMouseOver,
+    onMouseLeave,
 }: TimelineTrackLayerProps) => {
     const { scale } = useTimeline();
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: layer.id,
     });
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleMouseOver = () => {
+        onMouseOver();
+        setIsHovered(true);
+    };
+
+    const handleMouseLeave = () => {
+        onMouseLeave();
+        setIsHovered(false);
+    };
 
     const handleResize = (delta: number, position: DragHandlePosition) => {
         if (position === "start") {
@@ -37,19 +53,33 @@ export const TimelineTrackLayer = ({
 
     return (
         <div
+            onMouseOver={handleMouseOver}
+            onMouseLeave={handleMouseLeave}
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="absolute top-1/2 -translate-y-1/2 h-20 bg-blue-500 text-white rounded shadow flex justify-between items-center cursor-move z-50"
+            className="absolute group border-transparent border-2 hover:border-black/10 top-1/2 -translate-y-1/2 h-20 bg-blue-500 text-white rounded flex items-center cursor-move z-50"
             style={style}
         >
-            <DragHandle position="start" onResize={handleResize} />
-            <span className="text-xs">{layer.start.toFixed(0)}</span>
-            <span className="font-mono text-xs capitalize select-none truncate">
-                {layer.id}
-            </span>
-            <span className="text-xs flex-end">{layer.end.toFixed(0)}</span>
-            <DragHandle position="end" onResize={handleResize} />
+            <div className="absolute inset-0 flex justify-between items-center">
+                <DragHandle
+                    visible={isHovered}
+                    position="start"
+                    onResize={handleResize}
+                />
+                <DragHandle
+                    visible={isHovered}
+                    position="end"
+                    onResize={handleResize}
+                />
+            </div>
+            <div className="relative flex-1 flex justify-between items-center px-2">
+                <span className="text-xs">{layer.start.toFixed(0)}</span>
+                <span className="font-mono text-xs capitalize select-none truncate">
+                    {layer.id}
+                </span>
+                <span className="text-xs">{layer.end.toFixed(0)}</span>
+            </div>
         </div>
     );
 };
@@ -57,11 +87,16 @@ export const TimelineTrackLayer = ({
 type DragHandlePosition = "start" | "end";
 
 type DragHandleProps = {
+    visible: boolean;
     position: DragHandlePosition;
     onResize: (delta: number, position: DragHandlePosition) => void;
 };
 
-const DragHandle = ({ position, onResize }: DragHandleProps) => {
+const DragHandle = ({
+    visible = true,
+    position,
+    onResize,
+}: DragHandleProps) => {
     const { scale } = useTimeline();
 
     const resize = useDrag(({ event, down, delta: [dx] }) => {
@@ -73,7 +108,10 @@ const DragHandle = ({ position, onResize }: DragHandleProps) => {
 
     return (
         <div
-            className="cursor-col-resize w-2 h-full bg-white/20 hover:bg-white/40 touch-none"
+            style={{
+                opacity: visible ? 1 : 0,
+            }}
+            className="cursor-col-resize w-[10px] h-full bg-white/20 hover:bg-white/40 touch-none"
             {...resize()}
         />
     );
