@@ -4,6 +4,16 @@ import { useTimeline } from "./TimelineContext";
 import { useDrag } from "@use-gesture/react";
 import { useState } from "react";
 
+export const LAYER_TYPE_COLORS = {
+    audio: "#Ff9ed5",
+    video: "#ffd800",
+    image: "#C04afe",
+    text: "#00954e",
+    // green: "#00954e",
+    // red: "#Ff3323",
+    // white: "#Ffefff",
+};
+
 type TimelineTrackLayerProps = {
     layer: Layer;
     isLoading?: boolean;
@@ -86,14 +96,18 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="group px-1 absolute group border-white/20 border top-1/2 -translate-y-1/2 h-full bg-black text-white rounded-[6px] flex items-center cursor-move z-50 overflow-hidden"
+            className="px-2 absolute border-white/20 border top-1/2 -translate-y-1/2 h-full text-primary rounded-[6px] flex items-center cursor-move z-50 overflow-hidden"
             style={{
+                backgroundColor: LAYER_TYPE_COLORS[layer.type],
                 ...style,
                 opacity: isLoading ? 0.5 : 1,
             }}
         >
             {/* split cursor */}
-            <SplitCursor visible={isSplitMode} position={mousePosition.x} />
+            <SplitCursor
+                visible={isSplitMode && isHovered}
+                position={mousePosition.x}
+            />
 
             {/* drag handles */}
             <div className="absolute inset-0 flex justify-between items-center z-50">
@@ -101,20 +115,20 @@ export const TimelineTrackLayer = ({
                     visible={isHovered && !isSplitMode}
                     position="start"
                     onResize={handleResize}
+                    label={layer.start.toFixed(0)}
                 />
                 <DragHandle
                     visible={isHovered && !isSplitMode}
                     position="end"
                     onResize={handleResize}
+                    label={layer.end.toFixed(0)}
                 />
             </div>
 
             <div className="relative flex-1 flex justify-between items-center px-2">
-                <span className="text-xs">{layer.start.toFixed(0)}</span>
                 <span className="font-mono text-xs capitalize select-none truncate text-ellipsis">
                     {layer.id}
                 </span>
-                <span className="text-xs">{layer.end.toFixed(0)}</span>
             </div>
         </div>
     );
@@ -124,22 +138,34 @@ type DragHandlePosition = "start" | "end";
 
 type DragHandleProps = {
     visible: boolean;
+    label: string;
     position: DragHandlePosition;
-    onResize: (delta: number, position: DragHandlePosition) => void;
+    onResize?: (delta: number, position: DragHandlePosition) => void;
+    onResizeEnd?: () => void;
 };
 
 const DragHandle = ({
     visible = true,
-    position,
+    label,
+    position = "start",
     onResize,
+    onResizeEnd,
 }: DragHandleProps) => {
     const { scale } = useTimeline();
+    const [showLabel, setShowLabel] = useState(false);
 
     const resize = useDrag(({ event, down, delta: [dx] }) => {
         event.preventDefault();
         event.stopPropagation();
 
-        if (down) onResize(dx / scale, position);
+        // show label when dragging
+        setShowLabel(down);
+
+        if (down) {
+            onResize?.(dx / scale, position);
+        } else {
+            onResizeEnd?.();
+        }
     });
 
     return (
@@ -147,14 +173,20 @@ const DragHandle = ({
             style={{
                 display: visible ? "block" : "none",
             }}
-            className="cursor-col-resize w-[10px] h-full bg-white/20 hover:bg-white/40 touch-none"
+            className="cursor-col-resize w-[10px] h-full bg-black/10 hover:bg-black/40 touch-none"
             {...resize()}
-        />
+        >
+            {showLabel && (
+                <span className="-translate-y-1/2 text-xs bg-black text-white font-mono">
+                    {label}
+                </span>
+            )}
+        </div>
     );
 };
 
 const SplitCursor = ({
-    visible,
+    visible = false,
     position,
 }: {
     visible: boolean;
@@ -163,7 +195,7 @@ const SplitCursor = ({
     return (
         visible && (
             <span
-                className="group-hover:block hidden absolute inset-0 -translate-x-1/2 bg-[#ff3e5b] w-[2px]"
+                className="absolute inset-0 -translate-x-1/2 bg-[#ff783e] w-[1px] h-full"
                 style={{
                     left: `${position}px`,
                 }}

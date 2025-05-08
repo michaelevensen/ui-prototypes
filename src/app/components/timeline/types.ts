@@ -8,12 +8,20 @@ export enum TimelineTrackType {
 export type Track = {
     id: string;
     type: TimelineTrackType;
-    // layers: Layer[];
 };
+
+// layer
+export enum LayerType {
+    Audio = "audio",
+    Video = "video",
+    Image = "image",
+    Text = "text",
+}
 
 export type Layer = {
     id: string;
     trackId: string;
+    type: LayerType;
     start: number;
     end: number;
 };

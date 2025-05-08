@@ -11,7 +11,7 @@ import {
     DragStartEvent,
     // DragOverlay,
 } from "@dnd-kit/core";
-import { Layer, TimelineTrackType, Track } from "./types";
+import { Layer } from "./types";
 import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
 import { findOverlappingLayers, collectPushGroup } from "./utils";
@@ -24,47 +24,11 @@ export const TimelineTracks = () => {
         setActiveLayer,
         hoveredLayer,
         setHoveredLayer,
+        layers,
+        setLayers,
+        tracks,
     } = useTimeline();
-    const [layers, setLayers] = useState<Layer[]>([
-        {
-            trackId: "track-1",
-            id: "layer-1",
-            start: 0,
-            end: 100,
-        },
-        {
-            trackId: "track-1",
-            id: "layer-2",
-            start: 100,
-            end: 200,
-        },
-        {
-            trackId: "track-2",
-            id: "layer-3",
-            start: 200,
-            end: 300,
-        },
-        {
-            trackId: "track-2",
-            id: "layer-4",
-            start: 300,
-            end: 400,
-        },
-    ]);
-    const [tracks, setTracks] = useState<Track[]>([
-        {
-            id: "track-1",
-            type: TimelineTrackType.Audio,
-        },
-        {
-            id: "track-2",
-            type: TimelineTrackType.Video,
-        },
-        {
-            id: "track-3",
-            type: TimelineTrackType.Text,
-        },
-    ]);
+
     const timelineRef = useRef<HTMLDivElement | null>(null);
     const [timelineWidth, setTimelineWidth] = useState<number | null>(null);
 
@@ -91,8 +55,8 @@ export const TimelineTracks = () => {
         // move layer to new track if it's not already on the new track
         if (activeLayer?.trackId != over.id) {
             console.log("moving layer to new track");
-            setLayers((layers) =>
-                layers.map((layer) =>
+            setLayers((layers: Layer[]) =>
+                layers.map((layer: Layer) =>
                     layer.id === active.id
                         ? { ...layer, trackId: over.id.toString() }
                         : layer
@@ -101,8 +65,8 @@ export const TimelineTracks = () => {
         }
 
         // update layer start and end
-        setLayers((layers) =>
-            layers.map((layer) =>
+        setLayers((layers: Layer[]) =>
+            layers.map((layer: Layer) =>
                 layer.id === active.id
                     ? {
                           ...layer,
@@ -276,23 +240,25 @@ export const TimelineTracks = () => {
 
         // Create two new layers
         const firstLayer: Layer = {
-            id: `${layer.id}-1`,
+            id: `${layer.id}-a`,
             trackId: layer.trackId,
             start: layer.start,
             end: splitTime,
+            type: layer.type,
         };
 
         const secondLayer: Layer = {
-            id: `${layer.id}-2`,
+            id: `${layer.id}-b`,
             trackId: layer.trackId,
             start: splitTime,
             end: layer.end,
+            type: layer.type,
         };
 
         // Remove the original layer and add the two new ones
-        setLayers((layers) =>
+        setLayers((layers: Layer[]) =>
             layers
-                .filter((l) => l.id !== layer.id)
+                .filter((l: Layer) => l.id !== layer.id)
                 .concat([firstLayer, secondLayer])
         );
     };
@@ -355,7 +321,7 @@ export const TimelineTracks = () => {
                     </TimelineTrack>
                 ))}
 
-                <div className="flex flex-col gap-2 font-semibold">
+                <div className="flex flex-col gap-2 font-semibold font-mono">
                     {hoveredLayer?.trackId} &mdash; {hoveredLayer?.id}
                 </div>
             </div>
@@ -394,7 +360,7 @@ const TimelineTrack = ({
         <div
             ref={setNodeRef}
             style={{
-                backgroundColor: isOver ? "red" : "lightgray",
+                backgroundColor: isOver ? "red" : "#f5f5f5",
             }}
             className="relative min-h-12 rounded"
         >
