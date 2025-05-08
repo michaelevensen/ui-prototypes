@@ -16,6 +16,7 @@ import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
 import { findOverlappingLayers, collectPushGroup } from "./utils";
 import { TimelineControls } from "./TimelineControls";
+import { TimelineTrack } from "./TimelineTrack";
 
 export const TimelineTracks = () => {
     const {
@@ -344,27 +345,5 @@ export const TimelineTracks = () => {
                 )}
             </DragOverlay> */}
         </DndContext>
-    );
-};
-
-const TimelineTrack = ({
-    id,
-    children,
-}: {
-    id: string;
-    children: React.ReactNode;
-}) => {
-    const { setNodeRef, isOver } = useDroppable({ id });
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={{
-                backgroundColor: isOver ? "red" : "#f5f5f5",
-            }}
-            className="relative min-h-12 rounded"
-        >
-            {children}
-        </div>
     );
 };

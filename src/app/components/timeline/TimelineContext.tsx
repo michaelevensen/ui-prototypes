@@ -49,7 +49,7 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             trackId: "track-1",
             id: "layer-2",
             start: 100,
-            end: 200,
+            end: 440,
             type: LayerType.Video,
         },
         {
@@ -63,7 +63,7 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             trackId: "track-2",
             id: "layer-4",
             start: 300,
-            end: 400,
+            end: 621,
             type: LayerType.Text,
         },
     ]);
@@ -75,10 +75,6 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
         {
             id: "track-2",
             type: TimelineTrackType.Video,
-        },
-        {
-            id: "track-3",
-            type: TimelineTrackType.Text,
         },
     ]);
 

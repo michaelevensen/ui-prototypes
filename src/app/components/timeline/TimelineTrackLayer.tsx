@@ -176,6 +176,7 @@ const DragHandle = ({
             className="cursor-col-resize w-[10px] h-full bg-black/10 hover:bg-black/40 touch-none"
             {...resize()}
         >
+            {/* <span className="icon rotate-90">drag_handle</span> */}
             {showLabel && (
                 <span className="-translate-y-1/2 text-xs bg-black text-white font-mono">
                     {label}

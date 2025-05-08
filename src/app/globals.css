@@ -48,9 +48,15 @@ button {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    border: none;
-    background-color: #292929;
-    color: #ededed;
+    border-radius: 0.3rem;
+    border: 1px solid #292929;
+    background-color: #fafafa;
+    color: #292929;
     cursor: pointer;
+    /* transition: all 0.1s ease-in-out; */
+
+    &.active {
+        background-color: #292929;
+        color: #ffffff;
+    }
 }

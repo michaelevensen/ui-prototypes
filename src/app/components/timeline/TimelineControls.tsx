@@ -16,33 +16,25 @@ export const TimelineControls = () => {
             />
             <button
                 aria-label="Split Track"
-                style={{
-                    backgroundColor: isSplitMode ? "#ff783e" : "#292929",
-                    color: isSplitMode ? "black" : "white",
-                }}
+                className={isSplitMode ? "active" : ""}
                 onClick={() => {
                     setIsSplitMode(!isSplitMode);
                 }}
             >
                 <span className="icon">split_scene</span>
-                {isSplitMode ? "Disable Split Mode" : "Enable Split Mode"}
+                Split
             </button>
-            <button
-                aria-label="Add Track"
-                className="bg-[#292929] text-white px-2 py-1"
-                onClick={addTrack}
-            >
-                <span className="icon">add</span>
+            <button aria-label="Add Track" onClick={addTrack}>
+                <span className="icon">add_row_below</span>
                 Add Track
             </button>
             <button
                 aria-label="Add Layer"
-                className="bg-[#292929] text-white px-2 py-1"
                 onClick={() => {
                     addLayer("track-1");
                 }}
             >
-                <span className="icon">add</span>
+                <span className="icon">web_stories</span>
                 Add Layer
             </button>
         </div>

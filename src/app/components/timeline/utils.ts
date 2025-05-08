@@ -91,45 +91,6 @@ export const collectPushGroup = (
     return result;
 };
 
-/**
- * Returns all layers on the same track that are connected to the start layer.
- */
-// export const collectConnectedLayers = (
-//     allLayers: Layer[],
-//     startLayer: Layer,
-//     direction: "left" | "right"
-// ): Layer[] => {
-//     const sameTrack = allLayers
-//         .filter((l) => l.trackId === startLayer.trackId)
-//         .sort((a, b) => a.start - b.start);
-
-//     const visited = new Set<string>();
-//     const result: Layer[] = [];
-
-//     const visit = (layer: Layer) => {
-//         if (visited.has(layer.id)) return;
-//         visited.add(layer.id);
-//         result.push(layer);
-
-//         if (direction === "left") {
-//             const prev = sameTrack
-//                 .filter((l) => l.end === layer.start)
-//                 .sort((a, b) => b.start - a.start)[0];
-//             if (prev) visit(prev);
-//         } else {
-//             const next = sameTrack
-//                 .filter((l) => l.start === layer.end)
-//                 .sort((a, b) => a.start - b.start)[0];
-//             if (next) visit(next);
-//         }
-//     };
-
-//     visit(startLayer);
-//     return direction === "left"
-//         ? result.sort((a, b) => a.start - b.start)
-//         : result.sort((a, b) => a.start - b.start);
-// };
-
 export const findClosestEdge = (
     currentItem: Layer,
     allItems: Layer[],
