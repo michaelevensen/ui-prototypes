@@ -1,21 +1,30 @@
 "use client";
 
 import React, { useState } from "react";
+// import { restrictToParentElement } from "@dnd-kit/modifiers";
 import {
     DndContext,
     useDroppable,
     DragEndEvent,
     closestCenter,
     DragMoveEvent,
+    DragStartEvent,
+    // DragOverlay,
 } from "@dnd-kit/core";
 import { Layer, TimelineTrackType, Track } from "./types";
 import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
-import { findClosestEdge } from "./utils";
+import { findOverlappingLayers, collectPushGroup } from "./utils";
+import { TimelineControls } from "./TimelineControls";
 
 export const TimelineTracks = () => {
-    const { scale, setScale } = useTimeline();
-    // const [timelineWidth, setTimelineWidth] = useState(0);
+    const {
+        scale,
+        isSplitMode,
+        setActiveLayer,
+        hoveredLayer,
+        setHoveredLayer,
+    } = useTimeline();
     const [layers, setLayers] = useState<Layer[]>([
         {
             trackId: "track-1",
@@ -61,9 +70,18 @@ export const TimelineTracks = () => {
         console.log("drag move", event);
     };
 
+    const handleDragStart = (event: DragStartEvent) => {
+        const layer = layers.find((layer) => layer.id === event.active.id);
+        if (layer) {
+            setActiveLayer(layer);
+        }
+    };
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over) return;
+
+        setActiveLayer(null); // Clear active layer when drag ends
 
         // find active layer
         const activeLayer = layers.find((layer) => layer.id === active.id);
@@ -100,72 +118,176 @@ export const TimelineTracks = () => {
         newEnd: number,
         direction: "left" | "right"
     ) => {
-        const closestEdge = findClosestEdge(layer, layers, direction);
+        setLayers((layers) => {
+            const updatedLayers = [...layers];
+            const index = updatedLayers.findIndex((l) => l.id === layer.id);
+            if (index === -1) return layers;
 
-        let adjustedStart = newStart;
-        let adjustedEnd = newEnd;
+            const updatedLayer = { ...layer };
 
-        if (direction === "left") {
-            // Don't allow resizing past the end of the previous item
-            if (closestEdge && newStart < closestEdge.value) {
-                adjustedStart = closestEdge.value;
-            }
-            // Prevent inverting the layer (start can't pass end)
-            if (adjustedStart >= layer.end) {
-                adjustedStart = layer.end - 1; // enforce minimum width of 1
-            }
-        }
+            if (direction === "left") {
+                updatedLayer.start = newStart;
+                if (updatedLayer.start >= updatedLayer.end) {
+                    updatedLayer.start = updatedLayer.end - 1;
+                }
 
-        if (direction === "right") {
-            // Don't allow resizing past the start of the next item
-            if (closestEdge && newEnd > closestEdge.value) {
-                adjustedEnd = closestEdge.value;
-            }
-            // Prevent inverting the layer
-            if (adjustedEnd <= layer.start) {
-                adjustedEnd = layer.start + 1;
-            }
-        }
+                const overlapping = findOverlappingLayers(
+                    updatedLayers,
+                    layer,
+                    "left",
+                    updatedLayer.start,
+                    updatedLayer.end
+                );
 
+                if (overlapping.length > 0) {
+                    const pushGroup = collectPushGroup(
+                        updatedLayers,
+                        overlapping[0],
+                        "left",
+                        1 // maxGap
+                    );
+
+                    const overlapAmount =
+                        overlapping[0].end - updatedLayer.start;
+
+                    for (const l of pushGroup) {
+                        l.start -= overlapAmount;
+                        l.end -= overlapAmount;
+
+                        if (l.end <= l.start) {
+                            l.end = l.start + 1;
+                        }
+                    }
+                }
+            }
+
+            if (direction === "right") {
+                updatedLayer.end = newEnd;
+                if (updatedLayer.end <= updatedLayer.start) {
+                    updatedLayer.end = updatedLayer.start + 1;
+                }
+
+                const overlapping = findOverlappingLayers(
+                    updatedLayers,
+                    layer,
+                    "right",
+                    updatedLayer.start,
+                    updatedLayer.end
+                );
+
+                if (overlapping.length > 0) {
+                    const pushGroup = collectPushGroup(
+                        updatedLayers,
+                        overlapping[0],
+                        "right",
+                        1 // maxGap
+                    );
+
+                    const overlapAmount =
+                        updatedLayer.end - overlapping[0].start;
+
+                    for (const l of pushGroup) {
+                        l.start += overlapAmount;
+                        l.end += overlapAmount;
+                    }
+                }
+            }
+
+            updatedLayers[index] = updatedLayer;
+            return updatedLayers;
+        });
+    };
+    // const handleResize = (
+    //     layer: Layer,
+    //     newStart: number,
+    //     newEnd: number,
+    //     direction: "left" | "right"
+    // ) => {
+    //     const closestEdge = findClosestEdge(layer, layers, direction);
+
+    //     let adjustedStart = newStart;
+    //     let adjustedEnd = newEnd;
+
+    //     switch (direction) {
+    //         case "left":
+    //             // Don't allow resizing past the end of the previous item
+    //             if (closestEdge && newStart < closestEdge.value) {
+    //                 adjustedStart = closestEdge.value;
+    //             }
+    //             // Prevent inverting the layer (start can't pass end)
+    //             if (adjustedStart >= layer.end) {
+    //                 adjustedStart = layer.end - 1; // enforce minimum width of 1
+    //             }
+    //             break;
+    //         case "right":
+    //             // Don't allow resizing past the start of the next item
+    //             if (closestEdge && newEnd > closestEdge.value) {
+    //                 adjustedEnd = closestEdge.value;
+    //             }
+    //             // Prevent inverting the layer
+    //             if (adjustedEnd <= layer.start) {
+    //                 adjustedEnd = layer.start + 1;
+    //             }
+    //     }
+
+    //     setLayers((layers) =>
+    //         layers.map((l) =>
+    //             l.id === layer.id
+    //                 ? {
+    //                       ...l,
+    //                       start: adjustedStart,
+    //                       end: adjustedEnd,
+    //                   }
+    //                 : l
+    //         )
+    //     );
+    // };
+
+    const handleSplit = (layer: Layer, splitPosition: number) => {
+        if (!isSplitMode) return;
+
+        // splitPosition is already relative to the layer, just need to convert to timeline units
+        const splitTime = layer.start + splitPosition / scale;
+
+        // Ensure split time is within layer bounds
+        if (splitTime <= layer.start || splitTime >= layer.end) return;
+
+        // Create two new layers
+        const firstLayer: Layer = {
+            id: `${layer.id}-1`,
+            trackId: layer.trackId,
+            start: layer.start,
+            end: splitTime,
+        };
+
+        const secondLayer: Layer = {
+            id: `${layer.id}-2`,
+            trackId: layer.trackId,
+            start: splitTime,
+            end: layer.end,
+        };
+
+        // Remove the original layer and add the two new ones
         setLayers((layers) =>
-            layers.map((l) =>
-                l.id === layer.id
-                    ? {
-                          ...l,
-                          start: adjustedStart,
-                          end: adjustedEnd,
-                      }
-                    : l
-            )
+            layers
+                .filter((l) => l.id !== layer.id)
+                .concat([firstLayer, secondLayer])
         );
     };
 
-    const [progress, setProgress] = useState(0);
-
-    const handleMouseDown = (event: React.MouseEvent) => {
-        console.log("mouse down", event);
-        setProgress(event.clientX / scale);
-    };
-
-    const [hoveredLayer, setHoveredLayer] = useState<Layer | null>(null);
-
-    console.log("hoveredLayer", hoveredLayer);
-
     return (
         <DndContext
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
             collisionDetection={closestCenter}
         >
             <div
-                onMouseDown={handleMouseDown}
                 className="relative flex flex-col gap-1 p-2"
                 style={{
                     width: `${100 * scale}%`,
                 }}
             >
-                <ProgressBar progress={progress} />
-
                 {tracks.map((track) => (
                     <TimelineTrack key={track.id} id={track.id}>
                         {layers
@@ -176,6 +298,11 @@ export const TimelineTracks = () => {
                                     layer={layer}
                                     onMouseOver={() => setHoveredLayer(layer)}
                                     onMouseLeave={() => setHoveredLayer(null)}
+                                    onMouseDown={(x) => {
+                                        if (isSplitMode) {
+                                            handleSplit(layer, x);
+                                        }
+                                    }}
                                     onResize={(start, end, direction) =>
                                         handleResize(
                                             layer,
@@ -188,78 +315,30 @@ export const TimelineTracks = () => {
                             ))}
                     </TimelineTrack>
                 ))}
-            </div>
-            <input
-                type="range"
-                min={0.1}
-                step={0.02}
-                max={2}
-                value={scale}
-                onChange={(e) => setScale(Number(e.target.value))}
-            />
-            {/* buttons */}
-            <div className="flex gap-2 p-4">
-                <button
-                    aria-label="Split Track"
-                    onClick={() => {
-                        // go into split mode
-                    }}
-                >
-                    Split Track
-                </button>
-                <button
-                    aria-label="Add Track"
-                    onClick={() => {
-                        setTracks((tracks) => [
-                            ...tracks,
-                            {
-                                id: `track-${tracks.length + 1}`,
-                                type: TimelineTrackType.Audio,
-                            },
-                        ]);
-                    }}
-                >
-                    Add Track
-                </button>
-                <button
-                    aria-label="Add Layer"
-                    onClick={() => {
-                        // Find the layer with the highest end time
-                        const maxEndTime = Math.max(
-                            ...layers
-                                .filter((layer) => layer.trackId === "track-1")
-                                .map((layer) => layer.end)
-                        );
 
-                        setLayers((layers) => [
-                            ...layers,
-                            {
-                                id: `layer-${layers.length + 1}`,
-                                trackId: "track-1",
-                                start: maxEndTime,
-                                end: maxEndTime + 100, // Add 100 units after the last layer
-                            },
-                        ]);
-                    }}
-                >
-                    Add Layer
-                </button>
-            </div>
-            {/* <DragOverlay>
-                <div className="bg-white p-2 rounded-md">
-                    <p>Dragging...</p>
+                <div className="flex flex-col gap-2 font-semibold">
+                    {hoveredLayer?.trackId} &mdash; {hoveredLayer?.id}
                 </div>
+            </div>
+
+            <TimelineControls />
+
+            {/* overlay */}
+            {/* <DragOverlay>
+                {activeLayer && (
+                    <div
+                        className="bg-white/50 border-2 border-dashed border-gray-400 rounded h-full"
+                        style={{
+                            transform: `translate3d(${
+                                activeLayer.start * scale
+                            }px, 0px, 0)`,
+                        }}
+                    >
+                        {activeLayer?.id}
+                    </div>
+                )}
             </DragOverlay> */}
         </DndContext>
-    );
-};
-
-const ProgressBar = ({ progress }: { progress: number }) => {
-    return (
-        <div
-            className="h-full absolute z-50 bg-orange-500 w-[2px]"
-            style={{ left: `${progress}%` }}
-        />
     );
 };
 
