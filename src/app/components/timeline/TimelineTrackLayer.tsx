@@ -86,7 +86,7 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="group px-1 absolute group border-white/20 border top-1/2 -translate-y-1/2 h-full bg-black text-white rounded-[6px] flex items-center cursor-move z-50"
+            className="group px-1 absolute group border-white/20 border top-1/2 -translate-y-1/2 h-full bg-black text-white rounded-[6px] flex items-center cursor-move z-50 overflow-hidden"
             style={{
                 ...style,
                 opacity: isLoading ? 0.5 : 1,
