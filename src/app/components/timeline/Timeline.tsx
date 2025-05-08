@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 // import { restrictToParentElement } from "@dnd-kit/modifiers";
 import {
     DndContext,
@@ -65,6 +65,8 @@ export const TimelineTracks = () => {
             type: TimelineTrackType.Text,
         },
     ]);
+    const timelineRef = useRef<HTMLDivElement | null>(null);
+    const [timelineWidth, setTimelineWidth] = useState<number | null>(null);
 
     const handleDragMove = (event: DragMoveEvent) => {
         console.log("drag move", event);
@@ -118,6 +120,9 @@ export const TimelineTracks = () => {
         newEnd: number,
         direction: "left" | "right"
     ) => {
+        const timelineEnd = timelineWidth ? timelineWidth / scale : Infinity;
+        const timelineStart = 0;
+
         setLayers((layers) => {
             const updatedLayers = [...layers];
             const index = updatedLayers.findIndex((l) => l.id === layer.id);
@@ -126,16 +131,22 @@ export const TimelineTracks = () => {
             const updatedLayer = { ...layer };
 
             if (direction === "left") {
-                updatedLayer.start = newStart;
-                if (updatedLayer.start >= updatedLayer.end) {
-                    updatedLayer.start = updatedLayer.end - 1;
+                let targetStart = newStart;
+
+                if (targetStart < timelineStart) {
+                    targetStart = timelineStart;
                 }
+                if (targetStart >= layer.end) {
+                    targetStart = layer.end - 1;
+                }
+
+                updatedLayer.start = targetStart;
 
                 const overlapping = findOverlappingLayers(
                     updatedLayers,
                     layer,
                     "left",
-                    updatedLayer.start,
+                    targetStart,
                     updatedLayer.end
                 );
 
@@ -144,35 +155,66 @@ export const TimelineTracks = () => {
                         updatedLayers,
                         overlapping[0],
                         "left",
-                        1 // maxGap
+                        1
                     );
 
-                    const overlapAmount =
-                        overlapping[0].end - updatedLayer.start;
+                    const overlapAmount = overlapping[0].end - targetStart;
+                    const minStart = Math.min(...pushGroup.map((l) => l.start));
 
-                    for (const l of pushGroup) {
-                        l.start -= overlapAmount;
-                        l.end -= overlapAmount;
+                    if (minStart - overlapAmount < timelineStart) {
+                        // No room to push — shrink group to fit
+                        const totalWidth = pushGroup.reduce(
+                            (sum, l) => sum + (l.end - l.start),
+                            0
+                        );
+                        const availableWidth =
+                            updatedLayer.start - timelineStart;
+                        const scaleFactor = availableWidth / totalWidth;
 
-                        if (l.end <= l.start) {
-                            l.end = l.start + 1;
+                        let currentPos = timelineStart;
+
+                        for (const l of pushGroup) {
+                            const newWidth = Math.max(
+                                (l.end - l.start) * scaleFactor,
+                                1
+                            );
+                            l.start = currentPos;
+                            l.end = currentPos + newWidth;
+                            currentPos = l.end;
+                        }
+
+                        updatedLayer.start = overlapping[0].end;
+                    } else {
+                        // ✅ Room to push — apply push
+                        for (const l of pushGroup) {
+                            l.start -= overlapAmount;
+                            l.end -= overlapAmount;
+                            if (l.end <= l.start) {
+                                l.end = l.start + 1;
+                            }
                         }
                     }
                 }
             }
 
             if (direction === "right") {
-                updatedLayer.end = newEnd;
-                if (updatedLayer.end <= updatedLayer.start) {
-                    updatedLayer.end = updatedLayer.start + 1;
+                let targetEnd = newEnd;
+
+                if (targetEnd > timelineEnd) {
+                    targetEnd = timelineEnd;
                 }
+                if (targetEnd <= layer.start) {
+                    targetEnd = layer.start + 1;
+                }
+
+                updatedLayer.end = targetEnd;
 
                 const overlapping = findOverlappingLayers(
                     updatedLayers,
                     layer,
                     "right",
                     updatedLayer.start,
-                    updatedLayer.end
+                    targetEnd
                 );
 
                 if (overlapping.length > 0) {
@@ -180,15 +222,40 @@ export const TimelineTracks = () => {
                         updatedLayers,
                         overlapping[0],
                         "right",
-                        1 // maxGap
+                        1
                     );
 
-                    const overlapAmount =
-                        updatedLayer.end - overlapping[0].start;
+                    const overlapAmount = targetEnd - overlapping[0].start;
+                    const maxEnd = Math.max(...pushGroup.map((l) => l.end));
 
-                    for (const l of pushGroup) {
-                        l.start += overlapAmount;
-                        l.end += overlapAmount;
+                    if (maxEnd + overlapAmount > timelineEnd) {
+                        // No room to push — shrink group to fit
+                        const totalWidth = pushGroup.reduce(
+                            (sum, l) => sum + (l.end - l.start),
+                            0
+                        );
+                        const availableWidth = timelineEnd - updatedLayer.end;
+                        const scaleFactor = availableWidth / totalWidth;
+
+                        let currentPos = updatedLayer.end;
+
+                        for (const l of pushGroup) {
+                            const newWidth = Math.max(
+                                (l.end - l.start) * scaleFactor,
+                                1
+                            );
+                            l.start = currentPos;
+                            l.end = currentPos + newWidth;
+                            currentPos = l.end;
+                        }
+
+                        updatedLayer.end = overlapping[0].start;
+                    } else {
+                        // ✅ Room to push — apply push
+                        for (const l of pushGroup) {
+                            l.start += overlapAmount;
+                            l.end += overlapAmount;
+                        }
                     }
                 }
             }
@@ -197,51 +264,6 @@ export const TimelineTracks = () => {
             return updatedLayers;
         });
     };
-    // const handleResize = (
-    //     layer: Layer,
-    //     newStart: number,
-    //     newEnd: number,
-    //     direction: "left" | "right"
-    // ) => {
-    //     const closestEdge = findClosestEdge(layer, layers, direction);
-
-    //     let adjustedStart = newStart;
-    //     let adjustedEnd = newEnd;
-
-    //     switch (direction) {
-    //         case "left":
-    //             // Don't allow resizing past the end of the previous item
-    //             if (closestEdge && newStart < closestEdge.value) {
-    //                 adjustedStart = closestEdge.value;
-    //             }
-    //             // Prevent inverting the layer (start can't pass end)
-    //             if (adjustedStart >= layer.end) {
-    //                 adjustedStart = layer.end - 1; // enforce minimum width of 1
-    //             }
-    //             break;
-    //         case "right":
-    //             // Don't allow resizing past the start of the next item
-    //             if (closestEdge && newEnd > closestEdge.value) {
-    //                 adjustedEnd = closestEdge.value;
-    //             }
-    //             // Prevent inverting the layer
-    //             if (adjustedEnd <= layer.start) {
-    //                 adjustedEnd = layer.start + 1;
-    //             }
-    //     }
-
-    //     setLayers((layers) =>
-    //         layers.map((l) =>
-    //             l.id === layer.id
-    //                 ? {
-    //                       ...l,
-    //                       start: adjustedStart,
-    //                       end: adjustedEnd,
-    //                   }
-    //                 : l
-    //         )
-    //     );
-    // };
 
     const handleSplit = (layer: Layer, splitPosition: number) => {
         if (!isSplitMode) return;
@@ -275,6 +297,21 @@ export const TimelineTracks = () => {
         );
     };
 
+    useEffect(() => {
+        if (!timelineRef.current) return;
+
+        const updateWidth = () => {
+            setTimelineWidth(timelineRef.current!.offsetWidth);
+        };
+
+        updateWidth();
+
+        const resizeObserver = new ResizeObserver(updateWidth);
+        resizeObserver.observe(timelineRef.current);
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
     return (
         <DndContext
             onDragStart={handleDragStart}
@@ -283,9 +320,11 @@ export const TimelineTracks = () => {
             collisionDetection={closestCenter}
         >
             <div
+                ref={timelineRef}
                 className="relative flex flex-col gap-1 p-2"
                 style={{
                     width: `${100 * scale}%`,
+                    // width: `${timelineWidth}px`,
                 }}
             >
                 {tracks.map((track) => (

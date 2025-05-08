@@ -53,7 +53,7 @@ export const collectPushGroup = (
         while (true) {
             const prev = sameTrack
                 .filter((l) => !visited.has(l.id) && l.end <= current.start)
-                .sort((a, b) => b.end - a.end)[0]; // closest before
+                .sort((a, b) => b.end - a.end)[0];
 
             if (!prev) break;
 
@@ -73,7 +73,7 @@ export const collectPushGroup = (
         while (true) {
             const next = sameTrack
                 .filter((l) => !visited.has(l.id) && l.start >= current.end)
-                .sort((a, b) => a.start - b.start)[0]; // closest after
+                .sort((a, b) => a.start - b.start)[0];
 
             if (!next) break;
 
