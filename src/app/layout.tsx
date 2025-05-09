@@ -25,6 +25,10 @@ export default function RootLayout({
     return (
         <html lang="en">
             <head>
+                <script
+                    src="https://unpkg.com/react-scan/dist/auto.global.js"
+                    async
+                />
                 <link
                     rel="stylesheet"
                     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"

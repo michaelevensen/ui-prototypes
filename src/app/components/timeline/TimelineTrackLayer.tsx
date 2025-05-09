@@ -1,8 +1,11 @@
+"use client";
+
 import { useDraggable } from "@dnd-kit/core";
 import { Layer } from "./types";
 import { useTimeline } from "./TimelineContext";
 import { useDrag } from "@use-gesture/react";
 import { useState } from "react";
+// import { TimelineTrackLayerContent } from "./TimelineTrackLayerContent";
 
 export const LAYER_TYPE_COLORS = {
     audio: "#Ff9ed5",
@@ -42,6 +45,7 @@ export const TimelineTrackLayer = ({
         id: layer.id,
         disabled: isSplitMode,
     });
+
     const [isHovered, setIsHovered] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -96,7 +100,7 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="px-2 absolute border-white/20 border top-1/2 -translate-y-1/2 h-full text-primary rounded-[6px] flex items-center cursor-move z-50 overflow-hidden"
+            className="px-2 absolute border-white/20 border top-1/2 -translate-y-1/2 h-full text-primary rounded-[6px] flex items-center cursor-move overflow-hidden z-50"
             style={{
                 backgroundColor: LAYER_TYPE_COLORS[layer.type],
                 ...style,
@@ -124,6 +128,15 @@ export const TimelineTrackLayer = ({
                     label={layer.end.toFixed(0)}
                 />
             </div>
+
+            {/* content */}
+            {/* <TimelineTrackLayerContent layer={layer} /> */}
+
+            {/* {isHovered && (
+                <div className="absolute right-4">
+                    <TimelineTrackLayerControls />
+                </div>
+            )} */}
 
             <div className="relative flex-1 flex justify-between items-center px-2">
                 <span className="font-mono text-xs capitalize select-none truncate text-ellipsis">
@@ -176,7 +189,6 @@ const DragHandle = ({
             className="cursor-col-resize w-[10px] h-full bg-black/10 hover:bg-black/40 touch-none"
             {...resize()}
         >
-            {/* <span className="icon rotate-90">drag_handle</span> */}
             {showLabel && (
                 <span className="-translate-y-1/2 text-xs bg-black text-white font-mono">
                     {label}

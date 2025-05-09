@@ -24,4 +24,9 @@ export type Layer = {
     type: LayerType;
     start: number;
     end: number;
-};
+} & (
+    | { type: LayerType.Video; url: string }
+    | { type: LayerType.Image; url: string }
+    | { type: LayerType.Audio; url: string }
+    | { type: LayerType.Text; text: string }
+);

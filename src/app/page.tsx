@@ -1,10 +1,5 @@
-import { TimelineTracks } from "./components/timeline/Timeline";
-import { TimelineProvider } from "./components/timeline/TimelineContext";
+import { Timeline } from "./components/timeline/Timeline";
 
 export default function Home() {
-    return (
-        <TimelineProvider>
-            <TimelineTracks />
-        </TimelineProvider>
-    );
+    return <Timeline />;
 }

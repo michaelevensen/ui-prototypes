@@ -1,4 +1,4 @@
-import { Layer } from "./types";
+import { Layer, LayerType } from "./types";
 
 /**
  * Returns layers on the same track that overlap with the proposed new start/end.
@@ -142,4 +142,135 @@ const closest = (
     }
 
     return closest; // { id, value }
+};
+
+export enum VideoToFramesMethod {
+    fps,
+    totalFrames,
+}
+
+export class VideoToFrames {
+    /**
+     * Extracts frames from the video and returns them as an array of imageData (data URLs)
+     * @param videoUrl URL to the video file (HTML5 compatible format, e.g., MP4)
+     * @param amount Number of frames per second or total number of frames to extract
+     * @param type Extraction method: fps (default) or totalFrames
+     */
+    public static getFrames(
+        videoUrl: string,
+        amount: number,
+        type: VideoToFramesMethod = VideoToFramesMethod.fps
+    ): Promise<string[]> {
+        return new Promise(async (resolve, reject) => {
+            const frames: string[] = [];
+            const canvas: HTMLCanvasElement = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+
+            if (!context) {
+                reject("Unable to get canvas 2D context");
+                return;
+            }
+
+            const video: HTMLVideoElement = document.createElement("video");
+            video.preload = "auto";
+            video.crossOrigin = "anonymous"; // Useful for CORS-safe videos
+            video.src = videoUrl;
+
+            video.addEventListener("loadeddata", async () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const duration = video.duration;
+
+                let totalFrames: number = amount;
+                if (type === VideoToFramesMethod.fps) {
+                    totalFrames = Math.floor(duration * amount);
+                }
+
+                for (
+                    let time = 0;
+                    time < duration;
+                    time += duration / totalFrames
+                ) {
+                    const frame = await this.getVideoFrame(
+                        video,
+                        context,
+                        canvas,
+                        time
+                    );
+                    frames.push(frame);
+                }
+
+                resolve(frames);
+            });
+
+            video.addEventListener("error", () => {
+                reject("Failed to load the video");
+            });
+
+            video.load();
+        });
+    }
+
+    private static getVideoFrame(
+        video: HTMLVideoElement,
+        context: CanvasRenderingContext2D,
+        canvas: HTMLCanvasElement,
+        time: number
+    ): Promise<string> {
+        return new Promise((resolve) => {
+            const onSeeked = () => {
+                video.removeEventListener("seeked", onSeeked);
+                this.storeFrame(video, context, canvas, resolve);
+            };
+
+            video.addEventListener("seeked", onSeeked);
+            video.currentTime = time;
+        });
+    }
+
+    private static storeFrame(
+        video: HTMLVideoElement,
+        context: CanvasRenderingContext2D,
+        canvas: HTMLCanvasElement,
+        resolve: (frame: string) => void
+    ): void {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        resolve(canvas.toDataURL());
+    }
+}
+
+export const splitLayer = (layer: Layer, splitTime: number): [Layer, Layer] => {
+    const createSplitLayer = (
+        id: string,
+        start: number,
+        end: number
+    ): Layer => {
+        switch (layer.type) {
+            case LayerType.Video:
+            case LayerType.Image:
+            case LayerType.Audio:
+                return {
+                    id,
+                    trackId: layer.trackId,
+                    start,
+                    end,
+                    type: layer.type,
+                    url: layer.url,
+                };
+            case LayerType.Text:
+                return {
+                    id,
+                    trackId: layer.trackId,
+                    start,
+                    end,
+                    type: layer.type,
+                    text: layer.text,
+                };
+        }
+    };
+
+    return [
+        createSplitLayer(`${layer.id}-a`, layer.start, splitTime),
+        createSplitLayer(`${layer.id}-b`, splitTime, layer.end),
+    ];
 };

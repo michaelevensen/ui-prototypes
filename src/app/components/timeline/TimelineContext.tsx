@@ -2,41 +2,68 @@
 import { createContext, useContext, ReactNode, useState } from "react";
 import { Layer, LayerType, TimelineTrackType, Track } from "./types";
 
-type TimelineContextType = {
+interface TimelineContextType {
+    // data
+    layers: Layer[];
+    setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+    tracks: Track[];
+    addTrack: () => void;
+    addLayer: (trackId: string) => void;
+
     scale: number;
     setScale: (scale: number) => void;
     isSplitMode: boolean;
     setIsSplitMode: (isSplitMode: boolean) => void;
-    activeLayer: Layer | null;
-    setActiveLayer: (activeLayer: Layer | null) => void;
-    addTrack: () => void;
-    addLayer: (trackId: string) => void;
-    layers: Layer[];
-    setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
-    tracks: Track[];
-    setTracks: React.Dispatch<React.SetStateAction<Track[]>>;
-    // currentTrackId: string | null;
-    // setCurrentTrackId: (currentTrackId: string | null) => void;
-    hoveredLayer: Layer | null;
-    setHoveredLayer: (hoveredLayer: Layer | null) => void;
-};
 
-const TimelineContext = createContext<TimelineContextType | undefined>(
-    undefined
-);
+    // the layer that is being dragged
+    draggedLayer: Layer | null;
+    setDraggedLayer: (layer: Layer | null) => void;
+
+    // when im dragging a layer, i need to know the position of the mouse
+    setDragPosition: (position: { x: number; y: number } | null) => void;
+    dragPosition: { x: number; y: number } | null;
+
+    // the mouse position over the timeline
+    setMousePosition: (position: { x: number; y: number } | null) => void;
+    mousePosition: { x: number; y: number } | null;
+
+    // the track that is currently being dragged over
+    currentTrack: Track | null;
+    setCurrentTrack: (track: Track | null) => void;
+
+    //
+    hoveredLayer: Layer | null;
+    setHoveredLayer: (layer: Layer | null) => void;
+
+    timelineWidth: number;
+    setTimelineWidth: (width: number) => void;
+}
+
+export const TimelineContext = createContext<TimelineContextType | null>(null);
 
 export const TimelineProvider = ({ children }: { children: ReactNode }) => {
     const [scale, setScale] = useState(1);
+    const [timelineWidth, setTimelineWidth] = useState(0);
     const [isSplitMode, setIsSplitMode] = useState(false);
-    const [activeLayer, setActiveLayer] = useState<Layer | null>(null);
+
+    // the track that is currently being dragged over
+    const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+
+    // the layer that is being dragged
+    const [draggedLayer, setDraggedLayer] = useState<Layer | null>(null);
+    const [dragPosition, setDragPosition] = useState<{
+        x: number;
+        y: number;
+    } | null>(null);
+    const [mousePosition, setMousePosition] = useState<{
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // the layer that is being hovered over
     const [hoveredLayer, setHoveredLayer] = useState<Layer | null>(null);
-    // const [timelinePosition, setTimelinePosition] = useState<{
-    //     left: number;
-    //     top: number;
-    // } | null>(null);
 
-    // const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
-
+    // data
     const [layers, setLayers] = useState<Layer[]>([
         {
             trackId: "track-1",
@@ -44,6 +71,7 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             start: 0,
             end: 100,
             type: LayerType.Audio,
+            url: "",
         },
         {
             trackId: "track-1",
@@ -51,6 +79,15 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             start: 100,
             end: 440,
             type: LayerType.Video,
+            url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        },
+        {
+            trackId: "track-1",
+            id: "layer-5",
+            start: 440,
+            end: 621,
+            type: LayerType.Video,
+            url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         },
         {
             trackId: "track-2",
@@ -58,6 +95,7 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             start: 200,
             end: 300,
             type: LayerType.Image,
+            url: "https://picsum.photos/200/300",
         },
         {
             trackId: "track-2",
@@ -65,6 +103,7 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
             start: 300,
             end: 621,
             type: LayerType.Text,
+            text: "Hello, world!",
         },
     ]);
     const [tracks, setTracks] = useState<Track[]>([
@@ -106,7 +145,8 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
                 trackId,
                 start: maxEndTime,
                 end: maxEndTime + 100, // Add 100 units after the last layer
-                type: LayerType.Audio,
+                type: LayerType.Text,
+                text: "Hello, world!",
             },
         ]);
     };
@@ -115,21 +155,26 @@ export const TimelineProvider = ({ children }: { children: ReactNode }) => {
         <TimelineContext.Provider
             value={{
                 scale,
-                setScale,
                 isSplitMode,
+                draggedLayer,
+                hoveredLayer,
+                layers,
+                tracks,
+                dragPosition,
+                setDraggedLayer,
+                setHoveredLayer,
+                currentTrack,
+                setCurrentTrack,
+                setLayers,
+                setScale,
                 setIsSplitMode,
-                activeLayer,
-                setActiveLayer,
+                setDragPosition,
                 addTrack,
                 addLayer,
-                layers,
-                setLayers,
-                tracks,
-                setTracks,
-                hoveredLayer,
-                setHoveredLayer,
-                // currentTrackId,
-                // setCurrentTrackId,
+                timelineWidth,
+                setTimelineWidth,
+                setMousePosition,
+                mousePosition,
             }}
         >
             {children}
