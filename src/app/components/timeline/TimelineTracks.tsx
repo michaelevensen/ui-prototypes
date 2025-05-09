@@ -84,7 +84,8 @@ export const TimelineTracks = () => {
             trackId: newTrackId,
             layers,
             rawStart: rawNewStart,
-            squeezeTolerance: 0.2,
+            timelineWidth,
+            scale,
         });
 
         setLayers((prev) =>

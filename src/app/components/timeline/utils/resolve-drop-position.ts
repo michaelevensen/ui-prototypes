@@ -1,76 +1,74 @@
 import { Layer } from "../types";
 
+/**
+ * Resolves the drop position for a dragged layer on a timeline track.
+ *
+ * This function calculates the new start and end positions of a dragged layer
+ * based on its current position and the layers on the same track. It ensures
+ * that the layer does not overlap with other layers and is within the timeline
+ * bounds.
+ */
 export const resolveDropPosition = ({
     draggedLayer,
     trackId,
     layers,
     rawStart,
-    squeezeTolerance = 0.2,
+    timelineWidth,
+    scale,
 }: {
     draggedLayer: Layer;
     trackId: string;
     layers: Layer[];
     rawStart: number;
-    squeezeTolerance?: number;
+    timelineWidth: number;
+    scale: number;
 }): { start: number; end: number } => {
-    const originalDuration = draggedLayer.end - draggedLayer.start;
+    const duration = draggedLayer.end - draggedLayer.start;
     let proposedStart = rawStart;
 
     const trackLayers = layers
         .filter((l) => l.trackId === trackId && l.id !== draggedLayer.id)
         .sort((a, b) => a.start - b.start);
 
+    const maxTimelineUnits = timelineWidth / scale;
     const MAX_ITER = 10;
     let iter = 0;
 
     while (iter++ < MAX_ITER) {
-        const proposedEnd = proposedStart + originalDuration;
-        const proposedCenter = proposedStart + originalDuration / 2;
+        const proposedEnd = proposedStart + duration;
+        const proposedCenter = proposedStart + duration / 2;
         let adjusted = false;
 
-        for (let i = 0; i < trackLayers.length; i++) {
-            const l = trackLayers[i];
-            const next = trackLayers[i + 1];
-
+        for (const l of trackLayers) {
+            const otherCenter = (l.start + l.end) / 2;
             const overlaps = proposedStart < l.end && proposedEnd > l.start;
 
             if (overlaps) {
-                const otherCenter = (l.start + l.end) / 2;
                 proposedStart =
-                    proposedCenter < otherCenter
-                        ? l.start - originalDuration
-                        : l.end;
+                    proposedCenter < otherCenter ? l.start - duration : l.end;
                 adjusted = true;
                 break;
-            }
-
-            // Check for squeeze gap
-            if (next) {
-                const gapStart = l.end;
-                const gapEnd = next.start;
-                const gapSize = gapEnd - gapStart;
-
-                if (
-                    proposedStart >= gapStart &&
-                    proposedStart + originalDuration > gapEnd && // doesn't fit normally
-                    originalDuration - gapSize <=
-                        originalDuration * squeezeTolerance
-                ) {
-                    // Squeeze in
-                    return {
-                        start: gapStart,
-                        end: gapEnd,
-                    };
-                }
             }
         }
 
         if (!adjusted) break;
     }
 
-    const clampedStart = Math.max(proposedStart, 0);
+    // Final clamping to timeline bounds
+    let clampedStart = Math.max(proposedStart, 0);
+    let clampedEnd = clampedStart + duration;
+
+    if (clampedEnd > maxTimelineUnits) {
+        clampedEnd = maxTimelineUnits;
+        clampedStart = clampedEnd - duration;
+        if (clampedStart < 0) {
+            clampedStart = 0;
+            clampedEnd = duration;
+        }
+    }
+
     return {
         start: clampedStart,
-        end: clampedStart + originalDuration,
+        end: clampedEnd,
     };
 };

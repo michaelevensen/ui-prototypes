@@ -11,8 +11,14 @@ interface TimelineTrackProps {
 }
 
 export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
-    const { draggedLayer, dragPosition, currentTrack, layers, scale } =
-        useTimeline();
+    const {
+        draggedLayer,
+        dragPosition,
+        currentTrack,
+        layers,
+        scale,
+        timelineWidth,
+    } = useTimeline();
 
     const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -27,11 +33,20 @@ export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
             trackId: id,
             layers,
             rawStart,
-            squeezeTolerance: 0.2, // allow up to 20% shrink
+            timelineWidth,
+            scale,
         });
 
         return { start, end };
-    }, [draggedLayer, dragPosition, currentTrack, id, layers, scale]);
+    }, [
+        id,
+        draggedLayer,
+        dragPosition,
+        currentTrack,
+        layers,
+        scale,
+        timelineWidth,
+    ]);
 
     return (
         <div
