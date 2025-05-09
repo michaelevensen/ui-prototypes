@@ -26,15 +26,14 @@ export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
         if (!draggedLayer || !dragPosition || currentTrack?.id !== id)
             return null;
 
-        const rawStart = dragPosition.x / scale;
-
         const { start, end } = resolveDropPosition({
             draggedLayer,
             trackId: id,
             layers,
-            rawStart,
+            rawStart: dragPosition.x / scale,
             timelineWidth,
             scale,
+            snapThreshold: 10, // or tune for UX feel
         });
 
         return { start, end };
@@ -56,7 +55,7 @@ export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
         >
             {dropPreview && (
                 <div
-                    className="absolute top-0 bottom-0 border border-dashed border-blue-500/50 bg-blue-500/10 z-10 pointer-events-none"
+                    className="absolute top-0 bottom-0 border border-dashed border-blue-500 rounded-md bg-blue-500/20 z-10 pointer-events-none"
                     style={{
                         left: `${dropPreview.start * scale}px`,
                         width: `${

@@ -1,13 +1,6 @@
-import { Layer } from "../types";
+import { collectPushGroup } from ".";
+import type { Layer } from "../types";
 
-/**
- * Resolves the drop position for a dragged layer on a timeline track.
- *
- * This function calculates the new start and end positions of a dragged layer
- * based on its current position and the layers on the same track. It ensures
- * that the layer does not overlap with other layers and is within the timeline
- * bounds.
- */
 export const resolveDropPosition = ({
     draggedLayer,
     trackId,
@@ -15,6 +8,8 @@ export const resolveDropPosition = ({
     rawStart,
     timelineWidth,
     scale,
+    maxGap = 1,
+    snapThreshold = 20,
 }: {
     draggedLayer: Layer;
     trackId: string;
@@ -22,53 +17,81 @@ export const resolveDropPosition = ({
     rawStart: number;
     timelineWidth: number;
     scale: number;
+    maxGap?: number;
+    snapThreshold?: number;
 }): { start: number; end: number } => {
     const duration = draggedLayer.end - draggedLayer.start;
-    let proposedStart = rawStart;
+    const maxUnits = timelineWidth / scale;
 
     const trackLayers = layers
         .filter((l) => l.trackId === trackId && l.id !== draggedLayer.id)
         .sort((a, b) => a.start - b.start);
 
-    const maxTimelineUnits = timelineWidth / scale;
-    const MAX_ITER = 10;
-    let iter = 0;
+    // Check for overlap first
+    const proposedStart = rawStart;
+    const proposedEnd = rawStart + duration;
+    const proposedCenter = proposedStart + duration / 2;
 
-    while (iter++ < MAX_ITER) {
-        const proposedEnd = proposedStart + duration;
-        const proposedCenter = proposedStart + duration / 2;
-        let adjusted = false;
-
-        for (const l of trackLayers) {
+    for (const l of trackLayers) {
+        const overlaps = proposedStart < l.end && proposedEnd > l.start;
+        if (overlaps) {
+            // Force clamping away from overlapping item
             const otherCenter = (l.start + l.end) / 2;
-            const overlaps = proposedStart < l.end && proposedEnd > l.start;
+            const clampedStart =
+                proposedCenter < otherCenter ? l.start - duration : l.end;
 
-            if (overlaps) {
-                proposedStart =
-                    proposedCenter < otherCenter ? l.start - duration : l.end;
-                adjusted = true;
-                break;
-            }
-        }
-
-        if (!adjusted) break;
-    }
-
-    // Final clamping to timeline bounds
-    let clampedStart = Math.max(proposedStart, 0);
-    let clampedEnd = clampedStart + duration;
-
-    if (clampedEnd > maxTimelineUnits) {
-        clampedEnd = maxTimelineUnits;
-        clampedStart = clampedEnd - duration;
-        if (clampedStart < 0) {
-            clampedStart = 0;
-            clampedEnd = duration;
+            const finalStart = Math.max(
+                0,
+                Math.min(clampedStart, maxUnits - duration)
+            );
+            return { start: finalStart, end: finalStart + duration };
         }
     }
 
-    return {
-        start: clampedStart,
-        end: clampedEnd,
-    };
+    // No overlap, now check for snapping to gaps
+    const groups: Layer[][] = [];
+    const visited = new Set<string>();
+
+    for (const l of trackLayers) {
+        if (visited.has(l.id)) continue;
+        const group = collectPushGroup(trackLayers, l, "right", maxGap);
+        group.forEach((g) => visited.add(g.id));
+        groups.push(group);
+    }
+
+    const gaps: { start: number; end: number }[] = [];
+    let cursor = 0;
+
+    for (const group of groups) {
+        const groupStart = group[0].start;
+        const groupEnd = group[group.length - 1].end;
+
+        if (groupStart > cursor) {
+            gaps.push({ start: cursor, end: groupStart });
+        }
+
+        cursor = Math.max(cursor, groupEnd);
+    }
+
+    if (cursor < maxUnits) {
+        gaps.push({ start: cursor, end: maxUnits });
+    }
+
+    for (const gap of gaps) {
+        const gapSize = gap.end - gap.start;
+        const distToGapStart = Math.abs(proposedStart - gap.start);
+
+        if (gapSize >= duration && distToGapStart <= snapThreshold) {
+            return {
+                start: gap.start,
+                end: gap.start + duration,
+            };
+        }
+    }
+
+    // No snap, no overlap — free movement
+    const fallbackEnd = Math.min(proposedStart + duration, maxUnits);
+    const fallbackStart = Math.max(fallbackEnd - duration, 0);
+
+    return { start: fallbackStart, end: fallbackEnd };
 };
