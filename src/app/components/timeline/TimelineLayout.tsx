@@ -26,23 +26,23 @@ export const TimelineLayout = () => {
 
     return (
         <div className="flex flex-col gap-2 p-4">
-            <div className="overflow-x-scroll">
-                <div
-                    ref={timelineRef}
-                    className="relative"
-                    style={{ width: `${100 * scale}%` }}
-                    onMouseMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setMousePosition({
-                            x: e.clientX - rect.left,
-                            y: e.clientY - rect.top,
-                        });
-                    }}
-                >
-                    <CurrentCursor />
-                    <TimelineTracks />
-                </div>
+            {/* <div className="overflow-x-scroll"> */}
+            <div
+                ref={timelineRef}
+                className="relative h-full"
+                style={{ width: `${100 * scale}%` }}
+                onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMousePosition({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                    });
+                }}
+            >
+                <CurrentCursor />
+                <TimelineTracks />
             </div>
+            {/* </div> */}
             <TimelineControls />
         </div>
     );

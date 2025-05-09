@@ -7,6 +7,7 @@ import {
     DragEndEvent,
     closestCenter,
     DragStartEvent,
+    DragMoveEvent,
     // DragMoveEvent,
     // DragOverlay,
     // useDndMonitor,
@@ -14,7 +15,12 @@ import {
 import { Layer } from "./types";
 import { TimelineTrackLayer } from "./TimelineTrackLayer";
 import { useTimeline } from "./TimelineContext";
-import { findOverlappingLayers, collectPushGroup, splitLayer } from "./utils";
+import {
+    findOverlappingLayers,
+    collectPushGroup,
+    splitLayer,
+    resolveDropPosition,
+} from "./utils";
 import { TimelineTrack } from "./TimelineTrack";
 
 export const TimelineTracks = () => {
@@ -25,16 +31,31 @@ export const TimelineTracks = () => {
         layers,
         setLayers,
         tracks,
+        setDragPosition,
+        draggedLayer,
         timelineWidth,
+        setCurrentTrack,
     } = useTimeline();
 
-    // const handleDragMove = (event: DragMoveEvent) => {
-    //     const { over } = event;
-    //     console.log(over);
-    //     // if (over) {
-    //     //     setCurrentTrack(tracks.find((track) => track.id === over.id));
-    //     // }
-    // };
+    const handleDragMove = (event: DragMoveEvent) => {
+        const { over, delta, active } = event;
+
+        if (!over || !draggedLayer) {
+            setCurrentTrack(null);
+            setDragPosition(null);
+            return;
+        }
+
+        const activeLayer = layers.find((l) => l.id === active.id);
+        if (!activeLayer) return;
+
+        setCurrentTrack(tracks.find((track) => track.id === over.id) || null);
+
+        // Actual pixel offset of dragged layer's start position
+        const newStart = activeLayer.start * scale + delta.x;
+
+        setDragPosition({ x: newStart, y: 0 });
+    };
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
@@ -45,35 +66,38 @@ export const TimelineTracks = () => {
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
+        const { active, over, delta } = event;
         if (!over) return;
 
         setDraggedLayer(null);
+        setDragPosition(null);
+        setCurrentTrack(null);
 
-        // find active layer
-        const activeLayer = layers.find((layer) => layer.id === active.id);
+        const activeLayer = layers.find((l) => l.id === active.id);
+        if (!activeLayer) return;
 
-        // move layer to new track if it's not already on the new track
-        if (activeLayer?.trackId != over.id) {
-            setLayers((layers: Layer[]) =>
-                layers.map((layer: Layer) =>
-                    layer.id === active.id
-                        ? { ...layer, trackId: over.id.toString() }
-                        : layer
-                )
-            );
-        }
+        const newTrackId = over.id.toString();
+        const rawNewStart = activeLayer.start + delta.x / scale;
 
-        // update layer start and end
-        setLayers((layers: Layer[]) =>
-            layers.map((layer: Layer) =>
-                layer.id === active.id
+        const resolvedStart = resolveDropPosition({
+            draggedLayer: activeLayer,
+            trackId: newTrackId,
+            layers,
+            rawStart: rawNewStart,
+        });
+
+        const duration = activeLayer.end - activeLayer.start;
+
+        setLayers((prev) =>
+            prev.map((l) =>
+                l.id === active.id
                     ? {
-                          ...layer,
-                          start: layer.start + event.delta.x / scale,
-                          end: layer.end + event.delta.x / scale,
+                          ...l,
+                          trackId: newTrackId,
+                          start: resolvedStart,
+                          end: resolvedStart + duration,
                       }
-                    : layer
+                    : l
             )
         );
     };
@@ -253,7 +277,7 @@ export const TimelineTracks = () => {
             id="timeline-tracks"
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            // onDragMove={handleDragMove}
+            onDragMove={handleDragMove}
             collisionDetection={closestCenter}
         >
             <div className="flex flex-col gap-1">
@@ -285,18 +309,18 @@ export const TimelineTracks = () => {
 
                 {/* drag overlay */}
                 {/* <DragOverlay
-                        dropAnimation={{
-                            duration: 500,
-                            easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
-                        }}
-                    >
-                        {draggedLayer ? (
-                            <TimelineTrackLayer
-                                key={"dragging"}
-                                layer={draggedLayer}
-                            />
-                        ) : null}
-                    </DragOverlay> */}
+                            dropAnimation={{
+                                duration: 500,
+                                easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+                            }}
+                        >
+                            {draggedLayer ? (
+                                <TimelineTrackLayer
+                                    key={"dragging"}
+                                    layer={draggedLayer}
+                                />
+                            ) : null}
+                        </DragOverlay> */}
             </div>
         </DndContext>
     );
