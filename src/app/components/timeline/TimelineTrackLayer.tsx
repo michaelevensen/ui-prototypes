@@ -208,7 +208,7 @@ const SplitCursor = ({
     return (
         visible && (
             <span
-                className="absolute inset-0 -translate-x-1/2 bg-[#ff783e] w-[1px] h-full"
+                className="absolute inset-0 -translate-x-1/2 bg-[#ff783e] w-[2px] h-full"
                 style={{
                     left: `${position}px`,
                 }}

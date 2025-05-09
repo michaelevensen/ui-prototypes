@@ -249,43 +249,42 @@ export const TimelineTracks = () => {
     };
 
     return (
-        <>
-            <DndContext
-                id="timeline"
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                // onDragMove={handleDragMove}
-                collisionDetection={closestCenter}
-            >
-                <div className="flex flex-col gap-1">
-                    {tracks.map((track) => (
-                        <TimelineTrack key={track.id} id={track.id}>
-                            {layers
-                                .filter((layer) => layer.trackId === track.id)
-                                .map((layer) => (
-                                    <TimelineTrackLayer
-                                        key={layer.id}
-                                        layer={layer}
-                                        onMouseDown={(x) => {
-                                            if (isSplitMode) {
-                                                handleSplit(layer, x);
-                                            }
-                                        }}
-                                        onResize={(start, end, direction) =>
-                                            handleResize(
-                                                layer,
-                                                start,
-                                                end,
-                                                direction
-                                            )
+        <DndContext
+            id="timeline-tracks"
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            // onDragMove={handleDragMove}
+            collisionDetection={closestCenter}
+        >
+            <div className="flex flex-col gap-1">
+                {tracks.map((track) => (
+                    <TimelineTrack key={track.id} id={track.id}>
+                        {layers
+                            .filter((layer) => layer.trackId === track.id)
+                            .map((layer) => (
+                                <TimelineTrackLayer
+                                    key={layer.id}
+                                    layer={layer}
+                                    onMouseDown={(x) => {
+                                        if (isSplitMode) {
+                                            handleSplit(layer, x);
                                         }
-                                    />
-                                ))}
-                        </TimelineTrack>
-                    ))}
+                                    }}
+                                    onResize={(start, end, direction) =>
+                                        handleResize(
+                                            layer,
+                                            start,
+                                            end,
+                                            direction
+                                        )
+                                    }
+                                />
+                            ))}
+                    </TimelineTrack>
+                ))}
 
-                    {/* drag overlay */}
-                    {/* <DragOverlay
+                {/* drag overlay */}
+                {/* <DragOverlay
                         dropAnimation={{
                             duration: 500,
                             easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
@@ -298,8 +297,7 @@ export const TimelineTracks = () => {
                             />
                         ) : null}
                     </DragOverlay> */}
-                </div>
-            </DndContext>
-        </>
+            </div>
+        </DndContext>
     );
 };

@@ -10,14 +10,24 @@ interface TimelineContextType {
     addTrack: () => void;
     addLayer: (trackId: string) => void;
 
+    // timeline
+    // timelineRef: React.RefObject<HTMLDivElement>;
+    // setTimelineRef: (ref: React.RefObject<HTMLDivElement>) => void;
+
     scale: number;
     setScale: (scale: number) => void;
     isSplitMode: boolean;
     setIsSplitMode: (isSplitMode: boolean) => void;
+    timelineWidth: number;
+    setTimelineWidth: (width: number) => void;
 
     // the layer that is being dragged
     draggedLayer: Layer | null;
     setDraggedLayer: (layer: Layer | null) => void;
+
+    // the layer that is currently being hovered over
+    hoveredLayer: Layer | null;
+    setHoveredLayer: (layer: Layer | null) => void;
 
     // when im dragging a layer, i need to know the position of the mouse
     setDragPosition: (position: { x: number; y: number } | null) => void;
@@ -30,13 +40,6 @@ interface TimelineContextType {
     // the track that is currently being dragged over
     currentTrack: Track | null;
     setCurrentTrack: (track: Track | null) => void;
-
-    //
-    hoveredLayer: Layer | null;
-    setHoveredLayer: (layer: Layer | null) => void;
-
-    timelineWidth: number;
-    setTimelineWidth: (width: number) => void;
 }
 
 export const TimelineContext = createContext<TimelineContextType | null>(null);

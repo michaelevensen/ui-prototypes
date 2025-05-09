@@ -3,9 +3,8 @@ import { useTimeline } from "./TimelineContext";
 export const TimelineControls = () => {
     const { isSplitMode, setIsSplitMode, scale, setScale, addTrack, addLayer } =
         useTimeline();
-
     return (
-        <div className="flex gap-2 p-4">
+        <div className="flex gap-2">
             <div className="flex gap-2">
                 <button
                     aria-label="Split Layer"
@@ -44,6 +43,10 @@ export const TimelineControls = () => {
                 value={scale}
                 onChange={(e) => setScale(Number(e.target.value))}
             />
+            <button className="button" onClick={() => setScale(1)}>
+                <span className="icon">zoom_in</span>
+                Zoom to Fit
+            </button>
             <span className="text-xs text-slate-500">{scale.toFixed(2)}x</span>
         </div>
     );
