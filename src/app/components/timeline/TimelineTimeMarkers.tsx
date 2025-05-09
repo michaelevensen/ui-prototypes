@@ -60,7 +60,7 @@ const getDynamicMajorInterval = (timeScale: number): number => {
 };
 
 interface TimelineTimeMarkersProps {
-    timelineRef: RefObject<HTMLDivElement>;
+    timelineRef: RefObject<HTMLDivElement | null>;
     timeScale: number;
     durationInSeconds: number;
     onPointerDown: (time: number) => void;

@@ -1,8 +1,9 @@
 "use client";
 
-import { useDndMonitor, useDroppable } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { useTimeline } from "./TimelineContext";
 import { useMemo } from "react";
+import { resolveDropPosition } from "./utils";
 
 interface TimelineTrackProps {
     id: string;
@@ -15,53 +16,21 @@ export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
 
     const { setNodeRef, isOver } = useDroppable({ id });
 
-    useDndMonitor({
-        onDragMove: (event) => {
-            console.log(event);
-        },
-    });
-
     const dropPreview = useMemo(() => {
         if (!draggedLayer || !dragPosition || currentTrack?.id !== id)
             return null;
 
-        const duration = draggedLayer.end - draggedLayer.start;
-        let proposedStart = dragPosition.x / scale;
-        let proposedEnd = proposedStart + duration;
-        let proposedCenter = proposedStart + duration / 2;
+        const rawStart = dragPosition.x / scale;
 
-        const trackLayers = layers
-            .filter((l) => l.trackId === id && l.id !== draggedLayer.id)
-            .sort((a, b) => a.start - b.start);
+        const { start, end } = resolveDropPosition({
+            draggedLayer,
+            trackId: id,
+            layers,
+            rawStart,
+            squeezeTolerance: 0.2, // allow up to 20% shrink
+        });
 
-        for (const l of trackLayers) {
-            const otherCenter = (l.start + l.end) / 2;
-
-            const overlaps = proposedStart < l.end && proposedEnd > l.start;
-
-            if (overlaps) {
-                // If our center is to the left of theirs, clamp to the left
-                if (proposedCenter < otherCenter) {
-                    proposedStart = l.start - duration;
-                }
-                // If center is to the right, clamp to the right
-                else {
-                    proposedStart = l.end;
-                }
-
-                // Recompute based on clamped position
-                proposedEnd = proposedStart + duration;
-                proposedCenter = proposedStart + duration / 2;
-            }
-        }
-
-        // Clamp to start of timeline
-        if (proposedStart < 0) proposedStart = 0;
-
-        return {
-            start: proposedStart,
-            end: proposedStart + duration,
-        };
+        return { start, end };
     }, [draggedLayer, dragPosition, currentTrack, id, layers, scale]);
 
     return (

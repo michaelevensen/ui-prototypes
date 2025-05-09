@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTimeline } from "./TimelineContext";
 import { TimelineControls } from "./TimelineControls";
 import { TimelineTracks } from "./TimelineTracks";
+import { TimelineTimeMarkers } from "./TimelineTimeMarkers";
 
 export const TimelineLayout = () => {
     const { scale, setMousePosition, setTimelineWidth } = useTimeline();
@@ -29,7 +30,7 @@ export const TimelineLayout = () => {
             {/* <div className="overflow-x-scroll"> */}
             <div
                 ref={timelineRef}
-                className="relative h-full"
+                className="relative overflow-hidden"
                 style={{ width: `${100 * scale}%` }}
                 onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -39,6 +40,12 @@ export const TimelineLayout = () => {
                     });
                 }}
             >
+                <TimelineTimeMarkers
+                    timelineRef={timelineRef}
+                    timeScale={scale}
+                    durationInSeconds={100}
+                    onPointerDown={() => {}}
+                />
                 <CurrentCursor />
                 <TimelineTracks />
             </div>

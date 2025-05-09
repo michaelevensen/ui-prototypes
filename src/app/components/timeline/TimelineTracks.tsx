@@ -79,14 +79,13 @@ export const TimelineTracks = () => {
         const newTrackId = over.id.toString();
         const rawNewStart = activeLayer.start + delta.x / scale;
 
-        const resolvedStart = resolveDropPosition({
+        const { start, end } = resolveDropPosition({
             draggedLayer: activeLayer,
             trackId: newTrackId,
             layers,
             rawStart: rawNewStart,
+            squeezeTolerance: 0.2,
         });
-
-        const duration = activeLayer.end - activeLayer.start;
 
         setLayers((prev) =>
             prev.map((l) =>
@@ -94,8 +93,8 @@ export const TimelineTracks = () => {
                     ? {
                           ...l,
                           trackId: newTrackId,
-                          start: resolvedStart,
-                          end: resolvedStart + duration,
+                          start,
+                          end,
                       }
                     : l
             )
