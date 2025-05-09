@@ -6,6 +6,7 @@ import React, {
     PointerEvent,
 } from "react";
 import { formatTime } from "./helpers";
+import { useTimeline } from "./TimelineContext";
 
 interface Marker {
     time: number;
@@ -61,44 +62,41 @@ const getDynamicMajorInterval = (timeScale: number): number => {
 
 interface TimelineTimeMarkersProps {
     timelineRef: RefObject<HTMLDivElement | null>;
-    timeScale: number;
-    durationInSeconds: number;
-    onPointerDown: (time: number) => void;
+    onPointerDown?: (time: number) => void;
 }
 
 export const TimelineTimeMarkers = ({
     timelineRef,
-    timeScale,
-    durationInSeconds,
     onPointerDown,
 }: TimelineTimeMarkersProps) => {
     const [isDragging, setIsDragging] = useState(false);
+    const { timelineWidth, scale } = useTimeline();
+    const timelineVisibleDuration = timelineWidth / scale;
 
-    // Generate markers via useMemo
     const markers = useMemo(() => {
-        const majorInterval = getDynamicMajorInterval(timeScale);
+        const majorInterval = getDynamicMajorInterval(scale);
         const subdivisions = 5;
         const minorStep = majorInterval / subdivisions;
         const markerArray: Marker[] = [];
 
-        for (let t = 0; t <= durationInSeconds; t += majorInterval) {
+        for (let t = 0; t <= timelineVisibleDuration; t += majorInterval) {
             markerArray.push({
                 time: t,
-                position: t * timeScale,
+                position: t * scale,
                 isMain: true,
             });
             for (let i = 1; i < subdivisions; i++) {
                 const minor = t + i * minorStep;
-                if (minor >= durationInSeconds) break;
+                if (minor >= timelineVisibleDuration) break;
                 markerArray.push({
                     time: minor,
-                    position: minor * timeScale,
+                    position: minor * scale,
                     isMain: false,
                 });
             }
         }
         return markerArray;
-    }, [durationInSeconds, timeScale]);
+    }, [timelineVisibleDuration, scale]);
 
     // Update the time (scrub position) without re-creating new function references
     const updateTime = useCallback(
@@ -117,10 +115,10 @@ export const TimelineTimeMarkers = ({
             );
 
             // convert back to time
-            const newTime = relativeX / timeScale;
-            onPointerDown(newTime);
+            const newTime = relativeX / scale;
+            onPointerDown?.(newTime);
         },
-        [timelineRef, onPointerDown, timeScale]
+        [timelineRef, onPointerDown, scale]
     );
 
     // Pointer event handlers
@@ -152,7 +150,7 @@ export const TimelineTimeMarkers = ({
     return (
         <>
             <div
-                className="sticky top-0 h-8 z-50 flex-shrink-0 border-b border-foreground/20 hover:cursor-ew-resize"
+                className="sticky bg-white top-0 h-8 flex-shrink-0 border-b border-foreground/20 hover:cursor-ew-resize"
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
                 onPointerMove={handlePointerMove}
@@ -165,14 +163,16 @@ export const TimelineTimeMarkers = ({
                 {mainMarkers.map((marker, idx) => (
                     <div
                         key={idx}
-                        className="absolute h-full w-px bg-foreground/10 z-9"
+                        className="absolute h-full w-px bg-foreground/10"
                         style={{ left: `${marker.position}px` }}
                     />
                 ))}
                 <div
                     className="absolute h-full w-px bg-foreground/20"
                     style={{
-                        left: `calc(${durationInSeconds * timeScale}px - 1px)`,
+                        left: `calc(${
+                            timelineVisibleDuration * scale
+                        }px - 1px)`,
                     }}
                 />
             </div>

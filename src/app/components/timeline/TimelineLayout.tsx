@@ -40,12 +40,7 @@ export const TimelineLayout = () => {
                     });
                 }}
             >
-                <TimelineTimeMarkers
-                    timelineRef={timelineRef}
-                    timeScale={scale}
-                    durationInSeconds={100}
-                    onPointerDown={() => {}}
-                />
+                <TimelineTimeMarkers timelineRef={timelineRef} />
                 <CurrentCursor />
                 <TimelineTracks />
             </div>

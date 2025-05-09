@@ -86,16 +86,7 @@ export const TimelineTracks = () => {
             rawStart: rawNewStart,
             timelineWidth,
             scale,
-            snapThreshold: 10, // or tune for UX feel
         });
-        // const { start, end } = resolveDropPosition({
-        //     draggedLayer: activeLayer,
-        //     trackId: newTrackId,
-        //     layers,
-        //     rawStart: rawNewStart,
-        //     timelineWidth,
-        //     scale,
-        // });
 
         setLayers((prev) =>
             prev.map((l) =>
