@@ -280,7 +280,7 @@ export const TimelineTracks = () => {
             onDragMove={handleDragMove}
             collisionDetection={closestCenter}
         >
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-[1px]">
                 {tracks.map((track) => (
                     <TimelineTrack key={track.id} id={track.id}>
                         {layers

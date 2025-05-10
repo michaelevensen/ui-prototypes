@@ -21,7 +21,7 @@ export const TimelineControls = () => {
                     className="button"
                     onClick={addTrack}
                 >
-                    <span className="icon">add_row_below</span>
+                    <span className="icon">splitscreen_bottom</span>
                     Add Track
                 </button>
                 <button

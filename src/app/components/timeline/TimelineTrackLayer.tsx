@@ -100,7 +100,7 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="px-2 absolute border-white/20 border top-1/2 -translate-y-1/2 h-full text-primary rounded-[6px] flex items-center cursor-move overflow-hidden"
+            className="px-2 absolute border-black/20 border top-1/2 -translate-y-1/2 h-full text-primary rounded-lg flex items-center cursor-move overflow-hidden"
             style={{
                 backgroundColor: LAYER_TYPE_COLORS[layer.type],
                 ...style,
@@ -110,6 +110,7 @@ export const TimelineTrackLayer = ({
         >
             {/* split cursor */}
             <SplitCursor
+                label={`Split at ${mousePosition.x.toFixed(0)}`}
                 visible={isSplitMode && isHovered}
                 position={mousePosition.x}
             />
@@ -192,19 +193,26 @@ const DragHandle = ({
 
 const SplitCursor = ({
     visible = false,
+    label,
     position,
 }: {
     visible: boolean;
+    label: string;
     position: number;
 }) => {
     return (
         visible && (
-            <span
-                className="absolute inset-0 -translate-x-1/2 bg-[#ff783e] w-[2px] h-full"
+            <div
+                className="absolute inset-0 -translate-x-1/2 flex flex-col items-center"
                 style={{
                     left: `${position}px`,
                 }}
-            />
+            >
+                <span className="bg-black text-white -translate-y-1/2 text-xs p-1 rounded-xs w-fit z-99">
+                    {label}
+                </span>
+                <span className="bg-[#ff783e] w-[2px] h-full" />
+            </div>
         )
     );
 };
