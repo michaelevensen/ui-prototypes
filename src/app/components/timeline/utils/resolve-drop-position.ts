@@ -1,5 +1,5 @@
 import { collectPushGroup } from ".";
-import type { Layer } from "../types";
+import { Layer } from "../types";
 
 export const resolveDropPosition = ({
     draggedLayer,
@@ -27,69 +27,59 @@ export const resolveDropPosition = ({
         .filter((l) => l.trackId === trackId && l.id !== draggedLayer.id)
         .sort((a, b) => a.start - b.start);
 
-    // Check for overlap first
-    const proposedStart = rawStart;
-    const proposedEnd = rawStart + duration;
-    const proposedCenter = proposedStart + duration / 2;
-
-    for (const l of trackLayers) {
-        const overlaps = proposedStart < l.end && proposedEnd > l.start;
-        if (overlaps) {
-            // Force clamping away from overlapping item
-            const otherCenter = (l.start + l.end) / 2;
-            const clampedStart =
-                proposedCenter < otherCenter ? l.start - duration : l.end;
-
-            const finalStart = Math.max(
-                0,
-                Math.min(clampedStart, maxUnits - duration)
-            );
-            return { start: finalStart, end: finalStart + duration };
-        }
-    }
-
-    // No overlap, now check for snapping to gaps
-    const groups: Layer[][] = [];
+    // 1. Group tight layers using collectPushGroup
+    const groups: { start: number; end: number }[] = [];
     const visited = new Set<string>();
 
     for (const l of trackLayers) {
         if (visited.has(l.id)) continue;
         const group = collectPushGroup(trackLayers, l, "right", maxGap);
         group.forEach((g) => visited.add(g.id));
-        groups.push(group);
+        groups.push({
+            start: group[0].start,
+            end: group[group.length - 1].end,
+        });
     }
 
-    const gaps: { start: number; end: number }[] = [];
-    let cursor = 0;
+    // 2. Check for overlap with any group
+    const proposedStart = rawStart;
+    const proposedEnd = rawStart + duration;
+    const proposedCenter = proposedStart + duration / 2;
 
     for (const group of groups) {
-        const groupStart = group[0].start;
-        const groupEnd = group[group.length - 1].end;
+        const overlaps = proposedStart < group.end && proposedEnd > group.start;
+        if (overlaps) {
+            // Clamp outside the group
+            const groupCenter = (group.start + group.end) / 2;
+            const clampedStart =
+                proposedCenter < groupCenter
+                    ? group.start - duration
+                    : group.end;
 
-        if (groupStart > cursor) {
-            gaps.push({ start: cursor, end: groupStart });
-        }
+            const finalStart = Math.max(
+                0,
+                Math.min(clampedStart, maxUnits - duration)
+            );
 
-        cursor = Math.max(cursor, groupEnd);
-    }
-
-    if (cursor < maxUnits) {
-        gaps.push({ start: cursor, end: maxUnits });
-    }
-
-    for (const gap of gaps) {
-        const gapSize = gap.end - gap.start;
-        const distToGapStart = Math.abs(proposedStart - gap.start);
-
-        if (gapSize >= duration && distToGapStart <= snapThreshold) {
-            return {
-                start: gap.start,
-                end: gap.start + duration,
-            };
+            return { start: finalStart, end: finalStart + duration };
         }
     }
 
-    // No snap, no overlap — free movement
+    // 3. Snap if near group edges
+    for (const group of groups) {
+        const snapToStart =
+            Math.abs(proposedStart - group.start) <= snapThreshold;
+        const snapToEnd = Math.abs(proposedStart - group.end) <= snapThreshold;
+
+        if (snapToStart && group.start + duration <= group.end) {
+            return { start: group.start, end: group.start + duration };
+        }
+        if (snapToEnd && group.end + duration <= maxUnits) {
+            return { start: group.end, end: group.end + duration };
+        }
+    }
+
+    // 4. Free placement if not overlapping or near group
     const fallbackEnd = Math.min(proposedStart + duration, maxUnits);
     const fallbackStart = Math.max(fallbackEnd - duration, 0);
 
