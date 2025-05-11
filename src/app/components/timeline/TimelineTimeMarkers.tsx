@@ -26,7 +26,7 @@ const MarkerItem = React.memo(({ marker }: { marker: Marker }) => {
         >
             {marker.isMain ? (
                 <div className="flex flex-col justify-center h-full gap-1">
-                    <span className="text-[10px] text-muted-foreground select-none">
+                    <span className="text-[10px] text-black select-none font-mono">
                         {formatTime(marker.time, "mm:ss")}
                     </span>
                     <div className="w-[1px] h-full bg-primary/50" />
@@ -150,7 +150,7 @@ export const TimelineTimeMarkers = ({
     return (
         <>
             <div
-                className="sticky bg-white top-0 h-8 flex-shrink-0 border-b border-foreground/20 hover:cursor-ew-resize"
+                className="sticky bg-muted top-0 h-8 flex-shrink-0 border-b border-foreground/20 hover:cursor-ew-resize z-50"
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
                 onPointerMove={handlePointerMove}

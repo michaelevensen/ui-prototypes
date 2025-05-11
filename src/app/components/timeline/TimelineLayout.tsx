@@ -27,10 +27,10 @@ export const TimelineLayout = () => {
 
     return (
         <div className="flex flex-col gap-2 p-4">
-            {/* <div className="overflow-x-scroll"> */}
+            {/* <div className="overflow-x-scroll scrollbar-hide"> */}
             <div
                 ref={timelineRef}
-                className="relative overflow-hidden"
+                className="relative"
                 style={{ width: `${100 * scale}%` }}
                 onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -55,7 +55,7 @@ const CurrentCursor = () => {
 
     return (
         <div
-            className="absolute h-full w-[1px] bg-slate-300 pointer-events-none z-49"
+            className="absolute h-full w-[1px] bg-slate-300 pointer-events-none z-20"
             style={{ left: `${mousePosition?.x}px` }}
         />
     );
