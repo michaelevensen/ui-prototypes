@@ -11,6 +11,7 @@ import {
     PopoverPortal,
     PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { cn } from "@/app/utils";
 // import { DropdownMenu } from "../DropdownMenu";
 // import { cn } from "@/app/utils";
 // import { ChevronRight } from "lucide-react";
@@ -119,11 +120,12 @@ export const TimelineTrackLayer = ({
             }}
         >
             {/* split cursor */}
-            <SplitCursor
-                label={`Split at ${mousePosition.x.toFixed(0)}`}
-                visible={isSplitMode && isHovered}
-                position={mousePosition.x}
-            />
+            {mousePosition.x > 0 && isSplitMode && isHovered && (
+                <SplitCursor
+                    label={`Split at ${mousePosition.x.toFixed(0)}`}
+                    position={mousePosition.x}
+                />
+            )}
 
             {/* drag handles */}
             {(isHovered || menuOpen) && !isSplitMode && (
@@ -206,28 +208,24 @@ const DragHandle = ({
 };
 
 const SplitCursor = ({
-    visible = false,
     label,
     position,
 }: {
-    visible: boolean;
     label: string;
     position: number;
 }) => {
     return (
-        visible && (
-            <div
-                className="absolute inset-0 -translate-x-1/2 flex flex-col items-center"
-                style={{
-                    left: `${position}px`,
-                }}
-            >
-                <span className="bg-black text-white -translate-y-1/2 text-xs p-1 rounded-xs w-fit z-99">
-                    {label}
-                </span>
-                <span className="bg-[#ff783e] w-[2px] h-full" />
-            </div>
-        )
+        <div
+            className="absolute inset-0 -translate-x-1/2 flex flex-col items-center"
+            style={{
+                left: `${position}px`,
+            }}
+        >
+            <span className="absolute bg-black text-white -translate-y-1/2 text-xs p-1 rounded-xs z-99">
+                {label}
+            </span>
+            <span className="bg-[#ff783e] w-[2px] h-full" />
+        </div>
     );
 };
 
@@ -311,17 +309,24 @@ const TimelineTrackLayerMenuItem = ({
     label: string;
     onClick: () => void;
 }) => {
+    // "transition-all duration-snappy ease-snappy",
+
     return (
         <li
-            className="cursor-pointer hover:bg-black/5 hover:pl-3 transition-all duration-75 group [&:not(:last-child)]:border-b border-black/10 py-[7px] hover:rounded-lg ease-in-out hover:border-transparent select-none"
+            className={cn(
+                "hover:pl-3 hover:scale-105",
+                "group",
+                "flex items-center gap-2",
+                "hover:bg-black/5 hover:border-transparent",
+                "transition-all duration-snappy ease-snappy",
+                "cursor-pointer  [&:not(:last-child)]:border-b border-black/10 py-[8px] hover:rounded-lg select-none"
+            )}
             onClick={onClick}
             onPointerDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
         >
-            <span className="group-hover:scale-105 ease-in-out transition-all duration-75 flex items-center gap-2">
-                <span className="icon text-xl">{icon}</span>
-                <span className="text-sm">{label}</span>
-            </span>
+            <span className="icon text-xl">{icon}</span>
+            <span className="text-sm">{label}</span>
         </li>
     );
 };

@@ -7,7 +7,8 @@ import { TimelineTracks } from "./TimelineTracks";
 import { TimelineTimeMarkers } from "./TimelineTimeMarkers";
 
 export const TimelineLayout = () => {
-    const { scale, setMousePosition, setTimelineWidth } = useTimeline();
+    const { scale, setMousePosition, setTimelineWidth, isSplitMode } =
+        useTimeline();
     const timelineRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -41,7 +42,7 @@ export const TimelineLayout = () => {
                 }}
             >
                 <TimelineTimeMarkers timelineRef={timelineRef} />
-                <CurrentCursor />
+                {!isSplitMode && <CurrentCursor />}
                 <TimelineTracks />
             </div>
             {/* </div> */}

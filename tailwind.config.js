@@ -55,6 +55,18 @@ module.exports = {
                     DEFAULT: "hsl(var(--destructive))",
                     foreground: "hsl(var(--destructive-foreground))",
                 },
+                transitionTimingFunction: {
+                    snappy: "cubic-bezier(.32,.72,0,1)",
+                    swift: "cubic-bezier(.32,.72,0,1)",
+                    google: "cubic-bezier(0.25, 0.8, 0.25, 1)",
+                    spring: "linear(0, 0.0018, 0.0069 1.15%, 0.026 2.3%, 0.0637, 0.1135 5.18%, 0.2229 7.78%, 0.5977 15.84%, 0.7014, 0.7904, 0.8641, 0.9228, 0.9676 28.8%, 1.0032 31.68%, 1.0225, 1.0352 36.29%, 1.0431 38.88%, 1.046 42.05%, 1.0448 44.35%, 1.0407 47.23%, 1.0118 61.63%, 1.0025 69.41%, 0.9981 80.35%, 0.9992 99.94%)",
+                },
+                transitionDuration: {
+                    snappy: "400ms",
+                    swift: "1800ms",
+                    spring: "0.8333s",
+                    google: "400ms",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
