@@ -26,7 +26,7 @@ const MarkerItem = React.memo(({ marker }: { marker: Marker }) => {
         >
             {marker.isMain ? (
                 <div className="flex flex-col justify-center h-full gap-1">
-                    <span className="text-[10px] text-black select-none font-mono">
+                    <span className="text-[10px] text-primary select-none font-mono">
                         {formatTime(marker.time, "mm:ss")}
                     </span>
                     <div className="w-[1px] h-full bg-primary/50" />

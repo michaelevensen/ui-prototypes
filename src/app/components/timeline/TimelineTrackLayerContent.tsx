@@ -34,7 +34,9 @@ const TimelineTrackLayerContentVideo = ({ layer }: { layer: VideoLayer }) => {
 };
 
 const TimelineTrackLayerContentImage = ({ layer }: { layer: ImageLayer }) => {
-    return <img src={layer.url} alt={layer.id} />;
+    return (
+        <img src={layer.url} alt={layer.id} className="h-full object-cover" />
+    );
 };
 
 const TimelineTrackLayerContentText = ({ layer }: { layer: TextLayer }) => {

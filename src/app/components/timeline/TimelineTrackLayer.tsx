@@ -5,17 +5,8 @@ import { Layer } from "./types";
 import { useTimeline } from "./TimelineContext";
 import { useDrag } from "@use-gesture/react";
 import { useState } from "react";
-import {
-    Popover,
-    PopoverContent,
-    PopoverPortal,
-    PopoverTrigger,
-} from "@radix-ui/react-popover";
-import { cn } from "@/app/utils";
-// import { DropdownMenu } from "../DropdownMenu";
-// import { cn } from "@/app/utils";
-// import { ChevronRight } from "lucide-react";
-
+import { TimelineTrackLayerMenu } from "./TimelineTrackLayerMenu";
+import { TimelineTrackLayerContent } from "./TimelineTrackLayerContent";
 export const LAYER_TYPE_COLORS = {
     audio: "#EC5E2A",
     video: "#F4B5EE",
@@ -111,9 +102,9 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="px-2 absolute h-full text-primary border border-black/10 flex items-center cursor-move z-40"
+            className="px-2 absolute h-full text-primary border border-black/10 flex items-center cursor-move z-40 rounded-lg bg-white/10 backdrop-blur-sm"
             style={{
-                backgroundColor: LAYER_TYPE_COLORS[layer.type],
+                // backgroundColor: LAYER_TYPE_COLORS[layer.type],
                 ...style,
                 opacity: isLoading ? 0.5 : 1,
                 zIndex: isDragging ? 100 : 0,
@@ -152,10 +143,16 @@ export const TimelineTrackLayer = ({
             )}
 
             {/* layer id */}
-            <div className="relative flex-1 flex justify-between items-center px-2">
-                <span className="font-mono text-xs capitalize select-none truncate text-ellipsis">
+            <div
+                className="relative flex-1 flex justify-center items-center px-2 h-full"
+                // style={{
+                //     backgroundColor: LAYER_TYPE_COLORS[layer.type],
+                // }}
+            >
+                <TimelineTrackLayerContent layer={layer} />
+                {/* <span className="font-mono text-xs capitalize select-none truncate text-ellipsis">
                     {layer.id}
-                </span>
+                </span> */}
             </div>
         </div>
     );
@@ -226,107 +223,5 @@ const SplitCursor = ({
             </span>
             <span className="bg-[#ff783e] w-[2px] h-full" />
         </div>
-    );
-};
-
-const TimelineTrackLayerMenu = ({
-    isOpen,
-    setIsOpen,
-}: {
-    isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
-}) => {
-    return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-                <div
-                    className="bg-white rounded-full flex items-center justify-center w-5 h-5 cursor-pointer z-50 select-none text-black"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setIsOpen(!isOpen);
-                    }}
-                >
-                    <span className="icon">more_vert</span>
-                </div>
-            </PopoverTrigger>
-            <PopoverPortal>
-                <PopoverContent
-                    className="bg-white rounded-lg shadow-md px-4 py-1 w-[260px] text-black z-50"
-                    sideOffset={8}
-                >
-                    <ul className="flex flex-col">
-                        <TimelineTrackLayerMenuItem
-                            icon="splitscreen_bottom"
-                            label="Move to separate track"
-                            onClick={() => {
-                                console.log("move to separate track");
-                            }}
-                        />
-                        <TimelineTrackLayerMenuItem
-                            icon="asterisk"
-                            label="Save as highlight"
-                            onClick={() => {
-                                console.log("save as highlight");
-                            }}
-                        />
-                        <TimelineTrackLayerMenuItem
-                            icon="arrow_outward"
-                            label="Export"
-                            onClick={() => {
-                                console.log("export");
-                            }}
-                        />
-                        <TimelineTrackLayerMenuItem
-                            icon="delete"
-                            label="Delete"
-                            onClick={() => {
-                                console.log("delete");
-                            }}
-                        />
-                        {/* <TimelineTrackLayerMenuItem
-                            icon="redo"
-                            label="Prompt or revise"
-                            onClick={() => {
-                                console.log("prompt / revise");
-                            }}
-                        /> */}
-                    </ul>
-                </PopoverContent>
-            </PopoverPortal>
-        </Popover>
-    );
-};
-
-const TimelineTrackLayerMenuItem = ({
-    icon,
-    label,
-    onClick,
-}: {
-    icon: string;
-    label: string;
-    onClick: () => void;
-}) => {
-    // "transition-all duration-snappy ease-snappy",
-
-    return (
-        <li
-            className={cn(
-                "hover:pl-3 hover:scale-105",
-                "group",
-                "flex items-center gap-2",
-                "hover:bg-black/5 hover:border-transparent",
-                "transition-all duration-snappy ease-snappy",
-                "cursor-pointer  [&:not(:last-child)]:border-b border-black/10 py-[8px] hover:rounded-lg select-none"
-            )}
-            onClick={onClick}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-        >
-            <span className="icon text-xl">{icon}</span>
-            <span className="text-sm">{label}</span>
-        </li>
     );
 };
