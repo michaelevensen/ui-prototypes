@@ -110,7 +110,7 @@ export const TimelineTrackLayer = ({
             ref={setNodeRef}
             {...attributes}
             {...listeners}
-            className="px-2 absolute h-full text-primary rounded-lg flex items-center cursor-move z-40"
+            className="px-2 absolute h-full text-primary border border-black/10 flex items-center cursor-move z-40"
             style={{
                 backgroundColor: LAYER_TYPE_COLORS[layer.type],
                 ...style,
@@ -129,20 +129,17 @@ export const TimelineTrackLayer = ({
             {(isHovered || menuOpen) && !isSplitMode && (
                 <>
                     <div className="absolute inset-0 flex justify-between items-center z-50">
-                        <>
-                            <DragHandle
-                                position="start"
-                                onResize={handleResize}
-                                label={layer.start.toFixed(0)}
-                            />
-                            <DragHandle
-                                position="end"
-                                onResize={handleResize}
-                                label={layer.end.toFixed(0)}
-                            />
-                        </>
+                        <DragHandle
+                            position="start"
+                            onResize={handleResize}
+                            label={layer.start.toFixed(0)}
+                        />
+                        <DragHandle
+                            position="end"
+                            onResize={handleResize}
+                            label={layer.end.toFixed(0)}
+                        />
                     </div>
-
                     <div className="absolute top-2 right-2 flex justify-end items-center z-50">
                         <TimelineTrackLayerMenu
                             isOpen={menuOpen}
@@ -316,7 +313,7 @@ const TimelineTrackLayerMenuItem = ({
 }) => {
     return (
         <li
-            className="cursor-pointer hover:bg-black/5 hover:pl-3 transition-all duration-75 group [&:not(:last-child)]:border-b border-black/10 py-[7px] hover:rounded-lg ease-in-out hover:border-transparent"
+            className="cursor-pointer hover:bg-black/5 hover:pl-3 transition-all duration-75 group [&:not(:last-child)]:border-b border-black/10 py-[7px] hover:rounded-lg ease-in-out hover:border-transparent select-none"
             onClick={onClick}
             onPointerDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}

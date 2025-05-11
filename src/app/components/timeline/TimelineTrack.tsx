@@ -51,7 +51,7 @@ export const TimelineTrack = ({ id, children }: TimelineTrackProps) => {
         <div
             ref={setNodeRef}
             className="relative min-h-20 rounded-md transition-colors"
-            style={{ backgroundColor: isOver ? "#e0e0e0" : "transparent" }}
+            style={{ backgroundColor: isOver ? "#1b1b1b" : "transparent" }}
         >
             {dropPreview && (
                 <div
